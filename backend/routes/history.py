@@ -4,6 +4,8 @@ from fastapi import APIRouter, Query, status
 from pydantic import Field, BaseModel
 import datetime
 
+from models import HistoryItem
+
 
 class HistoryParams(BaseModel):
     limit: int = Field(25, ge=1, le=500, description="Максимальное количество элементов в ответе.")
@@ -11,13 +13,6 @@ class HistoryParams(BaseModel):
     order: Literal["asc", "desc"] = Field("desc", description="Порядок сортировки: 'asc' - по возрастанию, 'desc' - по убыванию.")
     from_timestamp: datetime.datetime = Field(None, description="Начальная временная метка для фильтрации истории (включительно).")
     to_timestamp: datetime.datetime = Field(None, description="Конечная временная метка для фильтрации истории (исключительно).")
-
-
-class HistoryItem(BaseModel):
-    id: str | int = Field(..., description="Уникальный идентификатор записи в истории.")
-    expression: str = Field(..., description="Математическое выражение.")
-    result: str = Field(..., description="Результат вычисления выражения.")
-    timestamp: datetime.datetime = Field(..., description="Временная метка вычисления.")
 
 
 router = APIRouter()

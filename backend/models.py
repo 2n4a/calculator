@@ -1,5 +1,7 @@
+import datetime
 from typing import Literal
 from pydantic import BaseModel, Field
+
 
 class Unit(BaseModel):
     """
@@ -30,3 +32,10 @@ class BaseErrorResponse(BaseResponse):
     result: Literal["error"] = Field("error", description="Статус ответа, всегда 'error'.")
     kind: str = Field(..., description="Тип ошибки. Например, 'SyntaxError', 'ZeroDivisionError' и т.д.")
     message: str = Field(..., description="Описание ошибки, человеко-читаемое.")
+
+
+class HistoryItem(BaseModel):
+    id: str | int = Field(..., description="Уникальный идентификатор записи в истории.")
+    expression: str = Field(..., description="Математическое выражение.")
+    result: str = Field(..., description="Результат вычисления выражения.")
+    timestamp: datetime.datetime = Field(..., description="Временная метка вычисления.")

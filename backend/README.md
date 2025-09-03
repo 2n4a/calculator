@@ -26,3 +26,10 @@ fastapi dev main.py
 ```shell
 fastapi run main.py
 ```
+
+## Docker
+
+Чтобы собрать контейнер:
+```shell
+docker build -f backend/Dockerfile .
+```

@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shake_gesture/shake_gesture.dart';
-import 'package:lava_lamp_effect/lava_lamp_effect.dart';
 import 'dart:async';
 
 class Bubble {
@@ -44,7 +43,7 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
   late StreamSubscription<AccelerometerEvent> _accelerometerSubscription;
   double _tiltFactor = 1.0;
   double _smoothTilt = 0.0;
-  bool _isLavaMode = false;
+  bool areBubblesDisabled = false;
 
   @override
   void initState() {
@@ -62,7 +61,7 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
       _accelerometerSubscription = accelerometerEventStream(
         samplingPeriod: const Duration(milliseconds: 100),
       ).listen((AccelerometerEvent event) {
-        if (!_isLavaMode) {
+        if (!areBubblesDisabled) {
           double y = event.y;
 
           double targetTilt;
@@ -104,21 +103,22 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
       Colors.white.withValues(alpha: 0.55),
     ];
 
-    final double bubbleSize =
-        _isLavaMode ? 50 + _rnd.nextDouble() * 60 : 38 + _rnd.nextDouble() * 38;
-    final double bubbleSpeed = _isLavaMode
+    final double bubbleSize = areBubblesDisabled
+        ? 50 + _rnd.nextDouble() * 60
+        : 38 + _rnd.nextDouble() * 38;
+    final double bubbleSpeed = areBubblesDisabled
         ? 0.2 + _rnd.nextDouble() * 0.3
         : 0.4 + _rnd.nextDouble() * 0.7;
 
     return Bubble(
       position: Offset(
-        _isLavaMode
+        areBubblesDisabled
             ? width * 0.3 + _rnd.nextDouble() * (width * 0.4)
             : _rnd.nextBool()
                 ? _rnd.nextDouble() * side
                 : width - _rnd.nextDouble() * side,
         y ??
-            (_isLavaMode
+            (areBubblesDisabled
                 ? height + 20 + _rnd.nextDouble() * 50
                 : height * 0.5 + _rnd.nextDouble() * height * 0.5),
       ),
@@ -145,7 +145,7 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
             );
           }
         } else {
-          if (_isLavaMode) {
+          if (areBubblesDisabled) {
             double horizontalSway = sin(
                     DateTime.now().millisecondsSinceEpoch / 1000.0 +
                         b.position.dx) *
@@ -158,7 +158,7 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
           if (b.position.dy + b.radius < -40) {
             final idx = _bubbles.indexOf(b);
             _bubbles[idx] = _randomBubble(
-              y: _isLavaMode
+              y: areBubblesDisabled
                   ? height + 20 + _rnd.nextDouble() * 50
                   : height + 40,
               width: width,
@@ -205,11 +205,15 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
     return ShakeGesture(
       onShake: () {
         setState(() {
-          _isLavaMode = !_isLavaMode;
+          areBubblesDisabled = !areBubblesDisabled;
         });
       },
-      child: _isLavaMode ? _buildLavaLamp() : _buildBubbles(),
+      child: areBubblesDisabled ? _buildEmptyBackground() : _buildBubbles(),
     );
+  }
+
+  Widget _buildEmptyBackground() {
+    return widget.child;
   }
 
   Widget _buildBubbles() {
@@ -220,30 +224,6 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
         painter: _BubblesPainter(_bubbles),
         child: widget.child,
       ),
-    );
-  }
-
-  Widget _buildLavaLamp() {
-    return Stack(
-      children: [
-        LavaLampEffect(
-          size: Size(MediaQuery.of(context).size.width,
-              MediaQuery.of(context).size.height),
-          color: Colors.blue.shade800.withValues(alpha: 0.6),
-          lavaCount: 4,
-          speed: 1,
-          repeatDuration: const Duration(seconds: 8),
-        ),
-        LavaLampEffect(
-          size: Size(MediaQuery.of(context).size.width,
-              MediaQuery.of(context).size.height),
-          color: Colors.deepPurple.shade800.withValues(alpha: 0.5),
-          lavaCount: 3,
-          speed: 2,
-          repeatDuration: const Duration(seconds: 6),
-        ),
-        widget.child,
-      ],
     );
   }
 }

@@ -272,16 +272,15 @@ class _CalculatorPageState extends State<CalculatorPage> {
                             height: 56,
                             child: ElevatedButton.icon(
                               icon: Icon(AppIcons.play, size: 28),
-                              label:
-                                  widget.controller.loading
-                                      ? const SizedBox(
-                                        width: 28,
-                                        height: 28,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 3,
-                                        ),
-                                      )
-                                      : const Text('Вычислить'),
+                              label: widget.controller.loading
+                                  ? const SizedBox(
+                                      width: 28,
+                                      height: 28,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 3,
+                                      ),
+                                    )
+                                  : const Text('Вычислить'),
                               style: ElevatedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
@@ -298,10 +297,9 @@ class _CalculatorPageState extends State<CalculatorPage> {
                                   alpha: 0.3,
                                 ),
                               ),
-                              onPressed:
-                                  widget.controller.loading
-                                      ? null
-                                      : widget.controller.calculate,
+                              onPressed: widget.controller.loading
+                                  ? null
+                                  : widget.controller.calculate,
                             ),
                           );
                         },
@@ -315,64 +313,62 @@ class _CalculatorPageState extends State<CalculatorPage> {
                           );
                           return AnimatedSwitcher(
                             duration: const Duration(milliseconds: 500),
-                            transitionBuilder:
-                                (child, anim) => ScaleTransition(
-                                  scale: anim,
-                                  child: FadeTransition(
-                                    opacity: anim,
-                                    child: child,
-                                  ),
-                                ),
-                            child:
-                                widget.controller.result.isNotEmpty
-                                    ? Column(
-                                      key: ValueKey(widget.controller.result),
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              AppIcons.result,
-                                              color: Colors.cyanAccent.shade400,
-                                              size: 32,
-                                              shadows: [
-                                                Shadow(
-                                                  color: Colors.blueAccent
-                                                      .withValues(alpha: 0.3),
-                                                  blurRadius: 8,
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(width: 8),
-                                            const Text(
-                                              'Результат:',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        SelectableText(
-                                          widget.controller.result,
-                                          style: TextStyle(
-                                            fontSize: 32,
-                                            color: Colors.blue.shade900,
-                                            fontWeight: FontWeight.bold,
+                            transitionBuilder: (child, anim) => ScaleTransition(
+                              scale: anim,
+                              child: FadeTransition(
+                                opacity: anim,
+                                child: child,
+                              ),
+                            ),
+                            child: widget.controller.result.isNotEmpty
+                                ? Column(
+                                    key: ValueKey(widget.controller.result),
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            AppIcons.result,
+                                            color: Colors.cyanAccent.shade400,
+                                            size: 32,
                                             shadows: [
                                               Shadow(
-                                                color: Colors.cyanAccent
-                                                    .withValues(alpha: 0.2),
+                                                color: Colors.blueAccent
+                                                    .withValues(alpha: 0.3),
                                                 blurRadius: 8,
                                               ),
                                             ],
                                           ),
+                                          const SizedBox(width: 8),
+                                          const Text(
+                                            'Результат:',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      SelectableText(
+                                        widget.controller.result,
+                                        style: TextStyle(
+                                          fontSize: 32,
+                                          color: Colors.blue.shade900,
+                                          fontWeight: FontWeight.bold,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.cyanAccent
+                                                  .withValues(alpha: 0.2),
+                                              blurRadius: 8,
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    )
-                                    : const SizedBox.shrink(),
+                                      ),
+                                    ],
+                                  )
+                                : const SizedBox.shrink(),
                           );
                         },
                       ),

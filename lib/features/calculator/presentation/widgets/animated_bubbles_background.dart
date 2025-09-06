@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:sensors_plus/sensors_plus.dart';
+import 'dart:async';
 
 class Bubble {
   Offset position;
@@ -37,6 +39,10 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
   final Random _rnd = Random();
   bool _initialized = false;
 
+  late StreamSubscription<AccelerometerEvent> _accelerometerSubscription;
+  double _tiltFactor = 1.0;
+  double _smoothTilt = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +50,42 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
         AnimationController(vsync: this, duration: const Duration(seconds: 60))
           ..addListener(_tick)
           ..repeat();
+
+    _initAccelerometer();
+  }
+
+  void _initAccelerometer() {
+    try {
+      _accelerometerSubscription = accelerometerEventStream(
+        samplingPeriod: const Duration(milliseconds: 100),
+      ).listen((AccelerometerEvent event) {
+        double rawTilt = event.y.clamp(-10.0, 14.0);
+        double absY = rawTilt.abs();
+        double targetTilt;
+
+        if (rawTilt > 10) {
+          targetTilt = 1.0 - ((rawTilt - 10) / 4.0) * 0.5;
+        } else if (absY < 3) {
+          targetTilt = 5.0;
+        } else {
+          targetTilt = 5.0 - ((absY - 3) / 7.0) * 4.0;
+        }
+
+        _smoothTilt = _smoothTilt * 0.8 + targetTilt * 0.2;
+
+        setState(() {
+          _tiltFactor = _smoothTilt.clamp(0.5, 3.0);
+        });
+      }, onError: (error) {
+        print('⚠️ Акселерометр недоступен: $error');
+        _tiltFactor = 1.0;
+      });
+    } catch (e) {
+      print('⚠️ Не удалось инициализировать акселерометр: $e');
+      _accelerometerSubscription =
+          Stream<AccelerometerEvent>.empty().listen((_) {});
+      _tiltFactor = 1.0;
+    }
   }
 
   Bubble _randomBubble({
@@ -78,7 +120,7 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
     setState(() {
       for (final b in _bubbles) {
         if (b.popping) {
-          b.popProgress += 0.04;
+          b.popProgress += 0.04 * _tiltFactor;
           if (b.popProgress >= 1) {
             final idx = _bubbles.indexOf(b);
             _bubbles[idx] = _randomBubble(
@@ -88,7 +130,7 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
             );
           }
         } else {
-          b.position = b.position.translate(0, -b.speed);
+          b.position = b.position.translate(0, -b.speed * _tiltFactor);
           if (b.position.dy + b.radius < -40) {
             final idx = _bubbles.indexOf(b);
             _bubbles[idx] = _randomBubble(
@@ -101,8 +143,6 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
       }
     });
   }
-
-  // width переменная была неиспользуемой, удалена
 
   void _onTapDown(TapDownDetails details) {
     for (final b in _bubbles) {
@@ -120,6 +160,7 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
   @override
   void dispose() {
     _controller.dispose();
+    _accelerometerSubscription.cancel();
     super.dispose();
   }
 
@@ -137,9 +178,39 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTapDown: _onTapDown,
-      child: CustomPaint(
-        painter: _BubblesPainter(_bubbles),
-        child: widget.child,
+      child: Stack(
+        children: [
+          CustomPaint(
+            painter: _BubblesPainter(_bubbles),
+            child: widget.child,
+          ),
+          if (_tiltFactor != 1.0)
+            Positioned(
+              top: 50,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '🎯 ${_tiltFactor.toStringAsFixed(1)}x',
+                  style: TextStyle(
+                    color: _tiltFactor < 0.8
+                        ? Colors.lightBlueAccent
+                        : _tiltFactor > 3.0
+                            ? Colors.red
+                            : _tiltFactor > 2.0
+                                ? Colors.orangeAccent
+                                : Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -153,15 +224,13 @@ class _BubblesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final b in bubbles) {
-      final paint =
-          Paint()
-            ..color = b.color
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-      final borderPaint =
-          Paint()
-            ..color = Colors.white.withValues(alpha: 0.7)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 2.5;
+      final paint = Paint()
+        ..color = b.color
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+      final borderPaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.7)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5;
       if (b.popping) {
         final scale = 1 + b.popProgress * 1.5;
         final opacity = (1 - b.popProgress).clamp(0.0, 1.0);

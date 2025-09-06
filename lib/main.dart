@@ -17,6 +17,7 @@ void main() {
 
 class CalculatorApp extends StatelessWidget {
   final CalculatorController controller;
+
   const CalculatorApp({super.key, required this.controller});
 
   @override
@@ -26,13 +27,8 @@ class CalculatorApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
-        fontFamily: 'Roboto',
-        textTheme: GoogleFonts.robotoTextTheme(
-          Theme.of(context).textTheme,
-        ),
-        iconTheme: const IconThemeData(
-          color: Colors.blue,
-        ),
+        textTheme: GoogleFonts.robotoTextTheme(Theme.of(context).textTheme),
+        iconTheme: const IconThemeData(color: Colors.blue),
       ),
       home: CalculatorPage(controller: controller),
     );

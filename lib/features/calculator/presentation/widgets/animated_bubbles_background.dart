@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class Bubble {
@@ -22,13 +21,16 @@ class Bubble {
 
 class AnimatedBubblesBackground extends StatefulWidget {
   final Widget child;
+
   const AnimatedBubblesBackground({super.key, required this.child});
 
   @override
-  State<AnimatedBubblesBackground> createState() => _AnimatedBubblesBackgroundState();
+  State<AnimatedBubblesBackground> createState() =>
+      _AnimatedBubblesBackgroundState();
 }
 
-class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground> with SingleTickerProviderStateMixin {
+class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   final List<Bubble> _bubbles = [];
   final int _bubbleCount = 18;
@@ -38,23 +40,29 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground> w
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 60))
-      ..addListener(_tick)
-      ..repeat();
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 60))
+          ..addListener(_tick)
+          ..repeat();
   }
 
-  Bubble _randomBubble({double? y, required double width, required double height}) {
+  Bubble _randomBubble({
+    double? y,
+    required double width,
+    required double height,
+  }) {
     final side = width > 700 ? 180.0 : 90.0;
-    // Цвет для теста: голубой с alpha, чтобы точно было видно
     final testColors = [
-      Colors.cyanAccent.withOpacity(0.45),
-      Colors.blueAccent.withOpacity(0.38),
-      Colors.lightBlue.withOpacity(0.42),
-      Colors.white.withOpacity(0.55),
+      Colors.cyanAccent.withValues(alpha: 0.45),
+      Colors.blueAccent.withValues(alpha: 0.38),
+      Colors.lightBlue.withValues(alpha: 0.42),
+      Colors.white.withValues(alpha: 0.55),
     ];
     return Bubble(
       position: Offset(
-        _rnd.nextBool() ? _rnd.nextDouble() * side : width - _rnd.nextDouble() * side,
+        _rnd.nextBool()
+            ? _rnd.nextDouble() * side
+            : width - _rnd.nextDouble() * side,
         y ?? (height * 0.5 + _rnd.nextDouble() * height * 0.5),
       ),
       radius: 38 + _rnd.nextDouble() * 38,
@@ -73,23 +81,33 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground> w
           b.popProgress += 0.04;
           if (b.popProgress >= 1) {
             final idx = _bubbles.indexOf(b);
-            _bubbles[idx] = _randomBubble(y: height + 40, width: width, height: height);
+            _bubbles[idx] = _randomBubble(
+              y: height + 40,
+              width: width,
+              height: height,
+            );
           }
         } else {
           b.position = b.position.translate(0, -b.speed);
           if (b.position.dy + b.radius < -40) {
             final idx = _bubbles.indexOf(b);
-            _bubbles[idx] = _randomBubble(y: height + 40, width: width, height: height);
+            _bubbles[idx] = _randomBubble(
+              y: height + 40,
+              width: width,
+              height: height,
+            );
           }
         }
       }
     });
   }
+
   // width переменная была неиспользуемой, удалена
 
   void _onTapDown(TapDownDetails details) {
     for (final b in _bubbles) {
-      if (!b.popping && (b.position - details.localPosition).distance < b.radius) {
+      if (!b.popping &&
+          (b.position - details.localPosition).distance < b.radius) {
         setState(() {
           b.popping = true;
           b.popProgress = 0;
@@ -129,22 +147,25 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground> w
 
 class _BubblesPainter extends CustomPainter {
   final List<Bubble> bubbles;
+
   _BubblesPainter(this.bubbles);
 
   @override
   void paint(Canvas canvas, Size size) {
     for (final b in bubbles) {
-      final paint = Paint()
-        ..color = b.color
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-      final borderPaint = Paint()
-        ..color = Colors.white.withOpacity(0.7)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5;
+      final paint =
+          Paint()
+            ..color = b.color
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+      final borderPaint =
+          Paint()
+            ..color = Colors.white.withValues(alpha: 0.7)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.5;
       if (b.popping) {
         final scale = 1 + b.popProgress * 1.5;
         final opacity = (1 - b.popProgress).clamp(0.0, 1.0);
-        paint.color = paint.color.withOpacity(paint.color.opacity * opacity);
+        paint.color = paint.color.withValues(alpha: paint.color.a * opacity);
         canvas.drawCircle(b.position, b.radius * scale, paint);
         canvas.drawCircle(b.position, b.radius * scale, borderPaint);
       } else {

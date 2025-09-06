@@ -2,12 +2,12 @@ import 'package:calculator/core/api_client.dart';
 import 'package:calculator/features/calculator/domain/entities/calculation.dart';
 import 'package:calculator/features/calculator/domain/repositories/calculator_repository.dart';
 import 'package:openapi/openapi.dart';
-import 'package:built_collection/built_collection.dart';
 
 class CalculatorRemoteDataSource implements CalculatorRepository {
   final Openapi client;
+
   CalculatorRemoteDataSource({Openapi? client})
-      : client = client ?? ApiClientProvider.getClient();
+    : client = client ?? ApiClientProvider.getClient();
 
   @override
   Future<String> calculate(String expression) async {
@@ -21,20 +21,22 @@ class CalculatorRemoteDataSource implements CalculatorRepository {
 
   @override
   Future<List<Calculation>> getHistory() async {
-  final defaultApi = client.getDefaultApi();
-  final response = await defaultApi.historyHistoryGet();
-  final items = response.data?.toList() ?? <HistoryItem>[];
-  return items
-    .map((item) => Calculation(
-        expression: item.expression,
-        result: item.result,
-        timestamp: item.timestamp,
-      ))
-    .toList();
+    final defaultApi = client.getDefaultApi();
+    final response = await defaultApi.historyHistoryGet();
+    final items = response.data?.toList() ?? <HistoryItem>[];
+    return items
+        .map(
+          (item) => Calculation(
+            expression: item.expression,
+            result: item.result,
+            timestamp: item.timestamp,
+          ),
+        )
+        .toList();
   }
 
   @override
-  Future<bool> checkLiveness() async {
+  Future<bool> checkIsAlive() async {
     final defaultApi = client.getDefaultApi();
     try {
       await defaultApi.livenessLivenessGet();

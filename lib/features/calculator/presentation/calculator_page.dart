@@ -3,35 +3,46 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:calculator/core/app_icons.dart';
 import 'calculator_controller.dart';
-import 'widgets/history_list.dart';
 import 'widgets/animated_bubbles_background.dart';
+import 'widgets/animated_history_modal.dart';
 
 class CalculatorPage extends StatefulWidget {
   final CalculatorController controller;
+
   const CalculatorPage({Key? key, required this.controller}) : super(key: key);
 
   @override
   State<CalculatorPage> createState() => _CalculatorPageState();
 }
+
 class AnimatedBackground extends StatefulWidget {
   const AnimatedBackground({super.key, required this.child});
+
   final Widget child;
+
   @override
   State<AnimatedBackground> createState() => _AnimatedBackgroundState();
 }
 
-class _AnimatedBackgroundState extends State<AnimatedBackground> with SingleTickerProviderStateMixin {
+class _AnimatedBackgroundState extends State<AnimatedBackground>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 8))..repeat();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat();
   }
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -62,7 +73,15 @@ class FrostedGlass extends StatelessWidget {
   final double borderRadius;
   final double blur;
   final Color? color;
-  const FrostedGlass({super.key, required this.child, this.borderRadius = 28, this.blur = 18, this.color});
+
+  const FrostedGlass({
+    super.key,
+    required this.child,
+    this.borderRadius = 28,
+    this.blur = 18,
+    this.color,
+  });
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
@@ -71,12 +90,15 @@ class FrostedGlass extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: Container(
           decoration: BoxDecoration(
-            color: (color ?? Colors.white.withOpacity(0.18)),
+            color: (color ?? Colors.white.withValues(alpha: 0.18)),
             borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.2),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.12),
+              width: 1.2,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.blue.withOpacity(0.08),
+                color: Colors.blue.withValues(alpha: 0.08),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
@@ -89,56 +111,80 @@ class FrostedGlass extends StatelessWidget {
   }
 }
 
-
-
-
-
 class _CalculatorPageState extends State<CalculatorPage> {
-  bool _showHistory = false;
+  late TextEditingController _textController;
 
-  void _openHistory() {
-    setState(() => _showHistory = true);
-    widget.controller.fetchHistory();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.3,
-        maxChildSize: 0.95,
-        builder: (_, controller) => FrostedGlass(
-          borderRadius: 32,
-          blur: 24,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('История', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                    IconButton(
-                      icon: Icon(AppIcons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Expanded(child: HistoryList(history: widget.controller.history, scrollController: controller)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ).whenComplete(() => setState(() => _showHistory = false));
+  @override
+  void initState() {
+    super.initState();
+    print('🏗️ _CalculatorPageState.initState() - виджет создан');
+    _textController = TextEditingController(text: widget.controller.expression);
+
+    widget.controller.addListener(_onControllerChanged);
   }
 
+  void _onControllerChanged() {
+    if (_textController.text != widget.controller.expression) {
+      final selection = _textController.selection;
+      _textController.text = widget.controller.expression;
+      _textController.selection = selection;
+    }
+  }
 
+  @override
+  void dispose() {
+    print('🗑️ _CalculatorPageState.dispose() - виджет уничтожен');
+    widget.controller.removeListener(_onControllerChanged);
+    _textController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openHistory() async {
+    print('📜 _openHistory() вызван');
+    await widget.controller.fetchHistory();
+    print('📜 История получена, открываем диалог');
+
+    if (!mounted) return;
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "История вычислений",
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation1, animation2) {
+        return SafeArea(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: DraggableScrollableSheet(
+              initialChildSize: 1.0,
+              minChildSize: 0.9,
+              maxChildSize: 1.0,
+              builder: (context, controller) {
+                return GestureDetector(
+                  onTap: () {},
+                  child: AnimatedHistoryModal(
+                    history: widget.controller.history,
+                    onClose: () => Navigator.of(context).pop(),
+                    onRefresh: () => widget.controller.fetchHistory(),
+                    calculatorController: widget.controller,
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(opacity: animation, child: child);
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller = widget.controller;
+    print(
+      '🔄 _CalculatorPageState.build() вызван - ПОЛНАЯ ПЕРЕСТРОЙКА СТРАНИЦЫ',
+    );
     final isWide = MediaQuery.of(context).size.width > 700;
     return AnimatedBubblesBackground(
       child: Scaffold(
@@ -148,7 +194,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
             children: [
               Icon(AppIcons.calculate, size: 30),
               SizedBox(width: 10),
-              const Text('Калькулятор', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Калькулятор',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           elevation: 0,
@@ -157,7 +206,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
             IconButton(
               icon: Icon(AppIcons.history),
               tooltip: 'История',
-              onPressed: _openHistory,
+              onPressed: () {
+                print('🖱️ Кнопка истории нажата');
+                _openHistory();
+              },
             ),
           ],
         ),
@@ -172,87 +224,165 @@ class _CalculatorPageState extends State<CalculatorPage> {
               child: FrostedGlass(
                 borderRadius: 32,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 32,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      TextField(
-                        style: const TextStyle(fontSize: 22),
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(AppIcons.edit),
-                          labelText: 'Введите выражение',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.18),
-                        ),
-                        onChanged: controller.setExpression,
-                        onSubmitted: (_) => controller.calculate(),
-                        autofocus: true,
-                        textInputAction: TextInputAction.done,
-                        controller: TextEditingController(text: controller.expression),
+                      ListenableBuilder(
+                        listenable: widget.controller,
+                        builder: (context, child) {
+                          print('🔄 TextField ListenableBuilder перестроен');
+                          return TextField(
+                            controller: _textController,
+                            style: const TextStyle(fontSize: 22),
+                            maxLines: null,
+                            minLines: 1,
+                            keyboardType: TextInputType.multiline,
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(AppIcons.edit),
+                              labelText: 'Введите выражение',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white.withValues(alpha: 0.18),
+                              alignLabelWithHint: true,
+                            ),
+                            onChanged: (value) {
+                              widget.controller.setExpression(value);
+                            },
+                            onSubmitted: (_) => widget.controller.calculate(),
+                            autofocus: true,
+                            textInputAction: TextInputAction.done,
+                          );
+                        },
                       ),
                       const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton.icon(
-                          icon: Icon(AppIcons.play, size: 28),
-                          label: controller.loading
-                              ? const SizedBox(
-                                  width: 28, height: 28,
-                                  child: CircularProgressIndicator(strokeWidth: 3),
-                                )
-                              : const Text('Вычислить'),
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            elevation: 6,
-                            backgroundColor: Colors.blue.shade700.withOpacity(0.85),
-                            foregroundColor: Colors.white,
-                            textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                            shadowColor: Colors.blueAccent.withOpacity(0.3),
-                          ),
-                          onPressed: controller.loading ? null : controller.calculate,
-                        ),
+                      ListenableBuilder(
+                        listenable: widget.controller,
+                        builder: (context, child) {
+                          print(
+                            '🔄 Button ListenableBuilder перестроен - loading: ${widget.controller.loading}',
+                          );
+                          return SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton.icon(
+                              icon: Icon(AppIcons.play, size: 28),
+                              label:
+                                  widget.controller.loading
+                                      ? const SizedBox(
+                                        width: 28,
+                                        height: 28,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 3,
+                                        ),
+                                      )
+                                      : const Text('Вычислить'),
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 6,
+                                backgroundColor: Colors.blue.shade700
+                                    .withValues(alpha: 0.85),
+                                foregroundColor: Colors.white,
+                                textStyle: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                shadowColor: Colors.blueAccent.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                              onPressed:
+                                  widget.controller.loading
+                                      ? null
+                                      : widget.controller.calculate,
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 24),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 500),
-                        transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: FadeTransition(opacity: anim, child: child)),
-                        child: controller.result.isNotEmpty
-                            ? Column(
-                                key: ValueKey(controller.result),
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        AppIcons.result,
-                                        color: Colors.cyanAccent.shade400,
-                                        size: 32,
-                                        shadows: [Shadow(color: Colors.blueAccent.withOpacity(0.3), blurRadius: 8)],
-                                      ),
-                                      const SizedBox(width: 8),
-                                      const Text('Результат:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
-                                    ],
+                      ListenableBuilder(
+                        listenable: widget.controller,
+                        builder: (context, child) {
+                          print(
+                            '🔄 Result ListenableBuilder перестроен - result: "${widget.controller.result}"',
+                          );
+                          return AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 500),
+                            transitionBuilder:
+                                (child, anim) => ScaleTransition(
+                                  scale: anim,
+                                  child: FadeTransition(
+                                    opacity: anim,
+                                    child: child,
                                   ),
-                                  const SizedBox(height: 8),
-                                  SelectableText(
-                                    controller.result,
-                                    style: TextStyle(fontSize: 32, color: Colors.blue.shade900, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.cyanAccent.withOpacity(0.2), blurRadius: 8)]),
-                                  ),
-                                ],
-                              )
-                            : const SizedBox.shrink(),
+                                ),
+                            child:
+                                widget.controller.result.isNotEmpty
+                                    ? Column(
+                                      key: ValueKey(widget.controller.result),
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              AppIcons.result,
+                                              color: Colors.cyanAccent.shade400,
+                                              size: 32,
+                                              shadows: [
+                                                Shadow(
+                                                  color: Colors.blueAccent
+                                                      .withValues(alpha: 0.3),
+                                                  blurRadius: 8,
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(width: 8),
+                                            const Text(
+                                              'Результат:',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        SelectableText(
+                                          widget.controller.result,
+                                          style: TextStyle(
+                                            fontSize: 32,
+                                            color: Colors.blue.shade900,
+                                            fontWeight: FontWeight.bold,
+                                            shadows: [
+                                              Shadow(
+                                                color: Colors.cyanAccent
+                                                    .withValues(alpha: 0.2),
+                                                blurRadius: 8,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                    : const SizedBox.shrink(),
+                          );
+                        },
                       ),
                       const SizedBox(height: 32),
-                      AnimatedOpacity(
-                        duration: const Duration(milliseconds: 300),
-                        opacity: _showHistory ? 0.3 : 1,
-                        child: Text(
-                          'Введите выражение и нажмите "Вычислить"\nили Enter',
-                          style: TextStyle(color: Colors.white.withOpacity(0.8)),
-                          textAlign: TextAlign.center,
+                      Text(
+                        'Введите выражение и нажмите "Вычислить"\nили Enter',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),

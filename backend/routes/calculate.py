@@ -1,9 +1,10 @@
 from decimal import Decimal
+from pyexpat.errors import messages
 from typing import Literal
 
 from fastapi import APIRouter, status
 from starlette.responses import JSONResponse
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, field_serializer
 
 from models import (
     BaseRequest,
@@ -27,6 +28,10 @@ class CalculationRequest(BaseRequest):
 class CalculationSuccess(BaseSuccessResponse):
     value: Decimal = Field(..., description="Результат вычисления.")
     parenthesized: str | None = Field(None, description="Выражение с расставленными скобками, если применимо.")
+
+    @field_serializer("value")
+    def serialize_value(self, value: Decimal) -> str:
+        return str(value)
 
 
 class CalculationError(BaseErrorResponse):
@@ -56,12 +61,26 @@ router = APIRouter()
     },
 )
 async def calculate(req: CalculationRequest):
-    _ = req.expression
+    requested_expression = req.expression
     # return CalculationSuccess(value=Decimal(0))
+
+    result: JSONResponse = calculate_values(requested_expression)
+
+    return result
+
+
+def calculate_values(req: str):
+
+    #тут уже делаем вычисления
+
+    if req.find("1") != -1:
+        return JSONResponse(
+            CalculationSuccess(value=Decimal(1337)).dict(),
+            status_code=status.HTTP_200_OK
+        )
     return JSONResponse(
         CalculationError(
-            message="Not implemented yet"
-        ),
+            message="Calculation Error"
+        ).dict(),
         status_code=status.HTTP_412_PRECONDITION_FAILED
     )
-

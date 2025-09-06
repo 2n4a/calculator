@@ -1,7 +1,11 @@
 name: calculator
+description: Android калькулятор
+version: 1.0.0+1
+homepage: https://github.com/2n4a/calculator
+publish_to: none # Приватный пакет, не для публикации на pub.dev
 
 environment:
-  sdk: '>=3.7.0 <4.0.0'
+  sdk: '>=3.5.0 <4.0.0'
 
 dependencies:
   flutter:

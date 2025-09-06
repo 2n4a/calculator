@@ -79,5 +79,8 @@
         state: reloaded
 
     - name: Prune old docker images
-      community.docker.docker_image:
-        prune: yes
+      community.docker.docker_prune:
+        images: yes
+        containers: no
+        networks: no
+        volumes: no

@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:shake_gesture/shake_gesture.dart';
+import 'package:lava_lamp_effect/lava_lamp_effect.dart';
 import 'dart:async';
 
 class Bubble {
@@ -42,6 +44,7 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
   late StreamSubscription<AccelerometerEvent> _accelerometerSubscription;
   double _tiltFactor = 1.0;
   double _smoothTilt = 0.0;
+  bool _isLavaMode = false;
 
   @override
   void initState() {
@@ -59,31 +62,31 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
       _accelerometerSubscription = accelerometerEventStream(
         samplingPeriod: const Duration(milliseconds: 100),
       ).listen((AccelerometerEvent event) {
-        double rawTilt = event.y.clamp(-10.0, 14.0);
-        double absY = rawTilt.abs();
-        double targetTilt;
+        if (!_isLavaMode) {
+          double y = event.y;
 
-        if (rawTilt > 10) {
-          targetTilt = 1.0 - ((rawTilt - 10) / 4.0) * 0.5;
-        } else if (absY < 3) {
-          targetTilt = 5.0;
+          double targetTilt;
+          if (y.abs() < 2) {
+            targetTilt = 4.0;
+          } else if (y < -2) {
+            targetTilt = 1.5;
+          } else {
+            targetTilt = 0.5;
+          }
+
+          _smoothTilt = _smoothTilt * 0.8 + targetTilt * 0.2;
+          _tiltFactor = _smoothTilt;
         } else {
-          targetTilt = 5.0 - ((absY - 3) / 7.0) * 4.0;
+          _tiltFactor = 0.7;
         }
 
-        _smoothTilt = _smoothTilt * 0.8 + targetTilt * 0.2;
-
-        setState(() {
-          _tiltFactor = _smoothTilt.clamp(0.5, 3.0);
-        });
+        setState(() {});
       }, onError: (error) {
         print('⚠️ Акселерометр недоступен: $error');
         _tiltFactor = 1.0;
       });
     } catch (e) {
-      print('⚠️ Не удалось инициализировать акселерометр: $e');
-      _accelerometerSubscription =
-          Stream<AccelerometerEvent>.empty().listen((_) {});
+      print('⚠️ Ошибка при инициализации акселерометра: $e');
       _tiltFactor = 1.0;
     }
   }
@@ -94,22 +97,34 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
     required double height,
   }) {
     final side = width > 700 ? 180.0 : 90.0;
-    final testColors = [
+    final List<Color> colors = [
       Colors.cyanAccent.withValues(alpha: 0.45),
       Colors.blueAccent.withValues(alpha: 0.38),
       Colors.lightBlue.withValues(alpha: 0.42),
       Colors.white.withValues(alpha: 0.55),
     ];
+
+    final double bubbleSize =
+        _isLavaMode ? 50 + _rnd.nextDouble() * 60 : 38 + _rnd.nextDouble() * 38;
+    final double bubbleSpeed = _isLavaMode
+        ? 0.2 + _rnd.nextDouble() * 0.3
+        : 0.4 + _rnd.nextDouble() * 0.7;
+
     return Bubble(
       position: Offset(
-        _rnd.nextBool()
-            ? _rnd.nextDouble() * side
-            : width - _rnd.nextDouble() * side,
-        y ?? (height * 0.5 + _rnd.nextDouble() * height * 0.5),
+        _isLavaMode
+            ? width * 0.3 + _rnd.nextDouble() * (width * 0.4)
+            : _rnd.nextBool()
+                ? _rnd.nextDouble() * side
+                : width - _rnd.nextDouble() * side,
+        y ??
+            (_isLavaMode
+                ? height + 20 + _rnd.nextDouble() * 50
+                : height * 0.5 + _rnd.nextDouble() * height * 0.5),
       ),
-      radius: 38 + _rnd.nextDouble() * 38,
-      speed: 0.4 + _rnd.nextDouble() * 0.7,
-      color: testColors[_rnd.nextInt(testColors.length)],
+      radius: bubbleSize,
+      speed: bubbleSpeed,
+      color: colors[_rnd.nextInt(colors.length)],
     );
   }
 
@@ -130,11 +145,22 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
             );
           }
         } else {
-          b.position = b.position.translate(0, -b.speed * _tiltFactor);
+          if (_isLavaMode) {
+            double horizontalSway = sin(
+                    DateTime.now().millisecondsSinceEpoch / 1000.0 +
+                        b.position.dx) *
+                0.5;
+            b.position = b.position.translate(horizontalSway, -b.speed * 0.3);
+          } else {
+            b.position = b.position.translate(0, -b.speed * _tiltFactor);
+          }
+
           if (b.position.dy + b.radius < -40) {
             final idx = _bubbles.indexOf(b);
             _bubbles[idx] = _randomBubble(
-              y: height + 40,
+              y: _isLavaMode
+                  ? height + 20 + _rnd.nextDouble() * 50
+                  : height + 40,
               width: width,
               height: height,
             );
@@ -175,43 +201,49 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
       }
       _initialized = true;
     }
+
+    return ShakeGesture(
+      onShake: () {
+        setState(() {
+          _isLavaMode = !_isLavaMode;
+        });
+      },
+      child: _isLavaMode ? _buildLavaLamp() : _buildBubbles(),
+    );
+  }
+
+  Widget _buildBubbles() {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTapDown: _onTapDown,
-      child: Stack(
-        children: [
-          CustomPaint(
-            painter: _BubblesPainter(_bubbles),
-            child: widget.child,
-          ),
-          if (_tiltFactor != 1.0)
-            Positioned(
-              top: 50,
-              right: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '🎯 ${_tiltFactor.toStringAsFixed(1)}x',
-                  style: TextStyle(
-                    color: _tiltFactor < 0.8
-                        ? Colors.lightBlueAccent
-                        : _tiltFactor > 3.0
-                            ? Colors.red
-                            : _tiltFactor > 2.0
-                                ? Colors.orangeAccent
-                                : Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-        ],
+      child: CustomPaint(
+        painter: _BubblesPainter(_bubbles),
+        child: widget.child,
       ),
+    );
+  }
+
+  Widget _buildLavaLamp() {
+    return Stack(
+      children: [
+        LavaLampEffect(
+          size: Size(MediaQuery.of(context).size.width,
+              MediaQuery.of(context).size.height),
+          color: Colors.blue.shade800.withValues(alpha: 0.6),
+          lavaCount: 4,
+          speed: 1,
+          repeatDuration: const Duration(seconds: 8),
+        ),
+        LavaLampEffect(
+          size: Size(MediaQuery.of(context).size.width,
+              MediaQuery.of(context).size.height),
+          color: Colors.deepPurple.shade800.withValues(alpha: 0.5),
+          lavaCount: 3,
+          speed: 2,
+          repeatDuration: const Duration(seconds: 6),
+        ),
+        widget.child,
+      ],
     );
   }
 }

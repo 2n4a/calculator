@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'features/calculator/data/calculator_remote_data_source.dart';
 import 'features/calculator/domain/usecases/calculate_expression.dart';
@@ -6,7 +7,12 @@ import 'features/calculator/domain/usecases/get_history.dart';
 import 'features/calculator/presentation/calculator_controller.dart';
 import 'features/calculator/presentation/calculator_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+
   final repository = CalculatorRemoteDataSource();
   final controller = CalculatorController(
     calculateExpression: CalculateExpression(repository),

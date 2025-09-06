@@ -64,9 +64,9 @@ jobs:
           directory: deploy
           playbook: deploy-ansible-playbook.yaml
           options: |
-            -i "${{ secrets.DEPLOY_SERVER_HOST }},"
-            -e "github_actor=${{ secrets.GHCR_USERNAME }}"
+            -i "${{ vars.DEPLOY_SERVER_HOST }},"
+            -e "github_actor=${{ vars.GHCR_USERNAME }}"
             -e "github_token=${{ secrets.GHCR_TOKEN }}"
-            -u "${{ secrets.DEPLOY_SERVER_USER }}"
+            -u "${{ vars.DEPLOY_SERVER_USER }}"
           key: ${{ secrets.DEPLOY_SERVER_KEY }}
           requirements: ansible-requirements.yaml

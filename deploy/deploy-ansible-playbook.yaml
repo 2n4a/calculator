@@ -77,3 +77,7 @@
       ansible.builtin.service:
         name: nginx
         state: reloaded
+
+    - name: Prune old docker images
+      community.docker.docker_image:
+        prune: yes

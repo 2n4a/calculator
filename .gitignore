@@ -9,16 +9,16 @@ __pycache__/
 
 # C extensions
 *.so
-
+dart_tool/
 # Distribution / packaging
 .Python
+.dart_tool
 build/
 develop-eggs/
 dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/

@@ -7,9 +7,28 @@ dependencies:
   flutter:
     sdk: flutter
   dio: ^5.4.0
+  cupertino_icons: ^1.0.6
+  flutter_svg: ^2.0.9
+  material_design_icons_flutter: ^7.0.7296
+  font_awesome_flutter: ^10.6.0
+  google_fonts: ^6.1.0
   openapi:
     path: ./openapi
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+# Конфигурация Flutter
+flutter:
+  uses-material-design: true
+  
+  # Добавим шрифты
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+        - asset: assets/fonts/Roboto-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700

@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 COPY ./backend/ /code/
 
-CMD ["fastapi", "run", "main.py", "--port", "8001", "--proxy-headers"]
+CMD ["fastapi", "run", "main.py", "--port", "8001", "--proxy-headers", "--root-path", "/api"]

@@ -1,0 +1,79 @@
+---
+- name: Deploy calculator backend with Docker Compose
+  hosts: all
+  become: true
+  collections:
+    - community.docker
+
+  vars:
+    app_name: calculator
+    app_dir: /opt/calculator
+    compose_filename: compose.yaml
+    ghcr_registry: ghcr.io
+
+  tasks:
+    - name: Ensure Docker is installed
+      ansible.builtin.package:
+        name:
+          - docker.io
+          - docker-compose-plugin
+        state: present
+
+    - name: Check that nginx is installed
+      ansible.builtin.command:
+        cmd: nginx -v
+      register: nginx_check
+      failed_when: nginx_check.rc != 0
+      changed_when: false
+
+    - name: Ensure application directory exists
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Copy production compose file to server
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/compose-production.yaml"
+        dest: "{{ app_dir }}/{{ compose_filename }}"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Log in to GitHub Container Registry
+      community.docker.docker_login:
+        registry_url: "{{ ghcr_registry }}"
+        username: "{{ github_actor }}"
+        password: "{{ github_token }}"
+
+    - name: Deploy with Docker Compose v2
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        files:
+          - "{{ compose_filename }}"
+        pull: always
+        recreate: auto
+        remove_orphans: true
+        state: present
+
+    - name: Upload nginx configuration for the application
+      ansible.builtin.copy:
+        src: nginx.conf
+        dest: /etc/nginx/conf.d/{{ app_name }}.conf
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Test nginx configuration
+      ansible.builtin.command:
+        cmd: nginx -t
+      register: nginx_test
+      failed_when: nginx_test.rc != 0
+      changed_when: false
+
+    - name: Reload nginx to apply new configuration
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded

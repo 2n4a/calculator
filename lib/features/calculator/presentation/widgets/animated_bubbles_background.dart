@@ -213,15 +213,28 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
   }
 
   Widget _buildEmptyBackground() {
-    return widget.child;
+    final bg = Theme.of(context).colorScheme.background;
+    return Container(
+      color: bg,
+      child: widget.child,
+    );
   }
 
   Widget _buildBubbles() {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final baseAlpha = isLight ? 0.001 : 0.01;
+    final borderColor = Colors.lightBlueAccent.withValues(alpha: baseAlpha);
+    final bg = Theme.of(context).colorScheme.background;
+
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTapDown: _onTapDown,
       child: CustomPaint(
-        painter: _BubblesPainter(_bubbles),
+        painter: _BubblesPainter(
+          _bubbles,
+          borderColor: borderColor,
+          backgroundColor: bg,
+        ),
         child: widget.child,
       ),
     );
@@ -230,17 +243,25 @@ class _AnimatedBubblesBackgroundState extends State<AnimatedBubblesBackground>
 
 class _BubblesPainter extends CustomPainter {
   final List<Bubble> bubbles;
+  final Color borderColor;
+  final Color backgroundColor;
 
-  _BubblesPainter(this.bubbles);
+  _BubblesPainter(
+    this.bubbles, {
+    this.borderColor = const Color(0xFFFFFFFF),
+    this.backgroundColor = const Color(0xFFFFFFFF),
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
+    final bgPaint = Paint()..color = backgroundColor;
+    canvas.drawRect(Offset.zero & size, bgPaint);
     for (final b in bubbles) {
       final paint = Paint()
         ..color = b.color
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
       final borderPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.7)
+        ..color = borderColor.withOpacity(0.7)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5;
       if (b.popping) {

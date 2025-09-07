@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'features/calculator/data/calculator_remote_data_source.dart';
 import 'features/calculator/domain/usecases/calculate_expression.dart';
 import 'features/calculator/domain/usecases/get_history.dart';
 import 'features/calculator/presentation/calculator_controller.dart';
 import 'features/calculator/presentation/calculator_page.dart';
+import 'core/theme/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,12 +30,9 @@ class CalculatorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Калькулятор',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-        textTheme: GoogleFonts.robotoTextTheme(Theme.of(context).textTheme),
-        iconTheme: const IconThemeData(color: Colors.blue),
-      ),
+      theme: ThemeProvider.lightTheme,
+      darkTheme: ThemeProvider.darkTheme,
+      themeMode: ThemeProvider.themeMode,
       home: CalculatorPage(controller: controller),
     );
   }

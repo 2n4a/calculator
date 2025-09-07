@@ -150,6 +150,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
       context: context,
       barrierDismissible: true,
       barrierLabel: "История вычислений",
+      barrierColor: Colors.transparent,
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation1, animation2) {
         return SafeArea(
@@ -196,7 +197,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
               SizedBox(width: 10),
               const Text(
                 'Калькулятор',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
               ),
             ],
           ),
@@ -237,25 +241,32 @@ class _CalculatorPageState extends State<CalculatorPage> {
                           print('🔄 TextField ListenableBuilder перестроен');
                           return TextField(
                             controller: _textController,
-                            style: const TextStyle(fontSize: 22),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyLarge
+                                ?.copyWith(fontSize: 22),
                             maxLines: null,
                             minLines: 1,
                             keyboardType: TextInputType.multiline,
                             decoration: InputDecoration(
-                              prefixIcon: Icon(AppIcons.edit),
+                              prefixIcon: Icon(AppIcons.edit,
+                                  color: Theme.of(context).iconTheme.color),
                               labelText: 'Введите выражение',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               filled: true,
-                              fillColor: Colors.white.withValues(alpha: 0.18),
+                              fillColor: Theme.of(context)
+                                  .colorScheme
+                                  .background
+                                  .withOpacity(0.18),
                               alignLabelWithHint: true,
                             ),
                             onChanged: (value) {
                               widget.controller.setExpression(value);
                             },
                             onSubmitted: (_) => widget.controller.calculate(),
-                            autofocus: true,
+                            autofocus: false,
                             textInputAction: TextInputAction.done,
                           );
                         },
@@ -286,9 +297,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 elevation: 6,
-                                backgroundColor: Colors.blue.shade700
-                                    .withValues(alpha: 0.85),
-                                foregroundColor: Colors.white,
+                                backgroundColor:
+                                    Colors.blue.shade700.withOpacity(0.85),
+                                foregroundColor:
+                                    Theme.of(context).colorScheme.onPrimary,
                                 textStyle: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -341,26 +353,34 @@ class _CalculatorPageState extends State<CalculatorPage> {
                                             ],
                                           ),
                                           const SizedBox(width: 8),
-                                          const Text(
+                                          Text(
                                             'Результат:',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(
+                                                    fontSize: 18,
+                                                    fontWeight:
+                                                        FontWeight.w500),
                                           ),
                                         ],
                                       ),
                                       const SizedBox(height: 8),
                                       SelectableText(
                                         widget.controller.result,
-                                        style: TextStyle(
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineLarge
+                                            ?.copyWith(
                                           fontSize: 32,
-                                          color: Colors.blue.shade900,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
                                           fontWeight: FontWeight.bold,
                                           shadows: [
                                             Shadow(
                                               color: Colors.cyanAccent
-                                                  .withValues(alpha: 0.2),
+                                                  .withOpacity(0.2),
                                               blurRadius: 8,
                                             ),
                                           ],
@@ -375,9 +395,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
                       const SizedBox(height: 32),
                       Text(
                         'Введите выражение и нажмите "Вычислить"\nили Enter',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.8),
-                        ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: Theme.of(context).hintColor),
                         textAlign: TextAlign.center,
                       ),
                     ],

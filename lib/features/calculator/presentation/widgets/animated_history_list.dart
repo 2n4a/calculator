@@ -16,14 +16,15 @@ class AnimatedHistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (history.isEmpty) {
-      return const Center(
-        child: Text(
-          'История пуста',
-          style: TextStyle(
+      final txtStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
             fontSize: 18,
             fontWeight: FontWeight.w500,
-            color: Colors.white70,
-          ),
+            color: Theme.of(context).hintColor,
+          );
+      return Center(
+        child: Text(
+          'История пуста',
+          style: txtStyle,
         ),
       );
     }
@@ -98,25 +99,24 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
   @override
   Widget build(BuildContext context) {
     final hueOffset = widget.random.nextDouble() * 0.2;
-    final primaryColor =
-        HSLColor.fromAHSL(
-          0.8,
-          220 + 20 * hueOffset,
-          0.7 + 0.2 * widget.random.nextDouble(),
-          0.5 + 0.2 * widget.random.nextDouble(),
-        ).toColor();
+    final primaryColor = HSLColor.fromAHSL(
+      0.8,
+      220 + 20 * hueOffset,
+      0.7 + 0.2 * widget.random.nextDouble(),
+      0.5 + 0.2 * widget.random.nextDouble(),
+    ).toColor();
 
-    final secondaryColor =
-        HSLColor.fromAHSL(
-          0.7,
-          190 + 30 * hueOffset,
-          0.6 + 0.3 * widget.random.nextDouble(),
-          0.6 + 0.2 * widget.random.nextDouble(),
-        ).toColor();
+    final secondaryColor = HSLColor.fromAHSL(
+      0.7,
+      190 + 30 * hueOffset,
+      0.6 + 0.3 * widget.random.nextDouble(),
+      0.6 + 0.2 * widget.random.nextDouble(),
+    ).toColor();
 
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
+        final colorScheme = Theme.of(context).colorScheme;
         return Opacity(
           opacity: _opacity.value,
           child: Transform.translate(
@@ -127,13 +127,12 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                 padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                 child: LiquidGlassContainer(
                   borderRadius: 18.0 + widget.random.nextDouble() * 2,
-                  backgroundColor: Colors.white.withValues(
-                    alpha: 0.08 + 0.06 * widget.random.nextDouble(),
+                  backgroundColor: colorScheme.surface.withOpacity(
+                    0.08 + 0.06 * widget.random.nextDouble(),
                   ),
-                  borderColor:
-                      widget.random.nextBool()
-                          ? primaryColor.withValues(alpha: 0.2)
-                          : secondaryColor.withValues(alpha: 0.2),
+                  borderColor: widget.random.nextBool()
+                      ? colorScheme.primary.withOpacity(0.2)
+                      : colorScheme.secondary.withOpacity(0.2),
                   blur: 16.0 + widget.random.nextDouble() * 4,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(18),
@@ -161,33 +160,36 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                         children: [
                           Text(
                             widget.item.expression,
-                            style: TextStyle(
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white.withValues(alpha: 0.95),
+                              color: colorScheme.onSurface.withOpacity(0.95),
                               shadows: [
                                 Shadow(
-                                  color: primaryColor.withValues(alpha: 0.7),
+                                  color: primaryColor.withOpacity(0.7),
                                   blurRadius: 4.0,
                                 ),
                               ],
                             ),
                           ),
-
                           const SizedBox(height: 6),
-
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Row(
                                 children: [
-                                  const Text(
+                                  Text(
                                     "=  ",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white70,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: colorScheme.onSurface
+                                              .withOpacity(0.7),
+                                        ),
                                   ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
@@ -205,23 +207,29 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                                     ),
                                     child: Text(
                                       widget.item.result,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: colorScheme.onPrimary,
+                                          ),
                                     ),
                                   ),
                                 ],
                               ),
-
                               if (widget.item.timestamp != null)
                                 Text(
                                   widget.item.timestamp!.toString(),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white.withValues(alpha: 0.6),
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        fontSize: 12,
+                                        color: colorScheme.onSurface
+                                            .withOpacity(0.6),
+                                      ),
                                 ),
                             ],
                           ),

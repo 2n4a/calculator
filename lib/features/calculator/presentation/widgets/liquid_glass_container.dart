@@ -53,31 +53,33 @@ class _LiquidGlassContainerState extends State<LiquidGlassContainer>
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: widget.blur, sigmaY: widget.blur),
             child: CustomPaint(
-              painter:
-                  widget.animate
-                      ? _LiquidBorderPainter(
-                        animation: _controller,
-                        borderRadius: widget.borderRadius,
-                        borderColor:
-                            widget.borderColor ??
-                            Colors.white.withValues(alpha: 0.25),
-                      )
-                      : null,
+              painter: widget.animate
+                  ? _LiquidBorderPainter(
+                      animation: _controller,
+                      borderRadius: widget.borderRadius,
+                      borderColor: widget.borderColor ??
+                          Colors.white.withValues(alpha: 0.25),
+                    )
+                  : null,
               child: Container(
                 decoration: BoxDecoration(
-                  color:
-                      widget.backgroundColor ??
-                      Colors.white.withValues(alpha: 0.15),
+                  color: widget.backgroundColor ??
+                      Theme.of(context).colorScheme.surface.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(widget.borderRadius),
                   border: Border.all(
-                    color:
-                        widget.borderColor ??
-                        Colors.white.withValues(alpha: 0.15),
+                    color: widget.borderColor ??
+                        Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.15),
                     width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withValues(alpha: 0.1),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.1),
                       blurRadius: 24,
                       offset: const Offset(0, 8),
                     ),
@@ -107,43 +109,41 @@ class _LiquidBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    final paintShadow =
-        Paint()
-          ..shader = LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.blue.withValues(
-                alpha: math.max(
-                  0.0,
-                  0.2 + 0.1 * math.sin(animation.value * math.pi * 2),
-                ),
-              ),
-              Colors.purple.withValues(
-                alpha: math.max(
-                  0.0,
-                  0.2 + 0.1 * math.cos(animation.value * math.pi * 2),
-                ),
-              ),
-              Colors.cyan.withValues(
-                alpha: math.max(
-                  0.0,
-                  0.2 + 0.1 * math.sin(animation.value * math.pi),
-                ),
-              ),
-            ],
-            stops: const [0.0, 0.5, 1.0],
-          ).createShader(rect);
+    final paintShadow = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.blue.withValues(
+            alpha: math.max(
+              0.0,
+              0.2 + 0.1 * math.sin(animation.value * math.pi * 2),
+            ),
+          ),
+          Colors.purple.withValues(
+            alpha: math.max(
+              0.0,
+              0.2 + 0.1 * math.cos(animation.value * math.pi * 2),
+            ),
+          ),
+          Colors.cyan.withValues(
+            alpha: math.max(
+              0.0,
+              0.2 + 0.1 * math.sin(animation.value * math.pi),
+            ),
+          ),
+        ],
+        stops: const [0.0, 0.5, 1.0],
+      ).createShader(rect);
 
-    final path =
-        Path()..addRRect(
-          RRect.fromRectAndRadius(rect, Radius.circular(borderRadius)),
-        );
+    final path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(rect, Radius.circular(borderRadius)),
+      );
 
-    // Создание эффекта "жидкости" вдоль границы
     final wavyPath = Path();
-    const waveCount = 15; // количество волн
-    const waveHeight = 1.5; // высота волны
+    const waveCount = 15;
+    const waveHeight = 1.5;
     final double pathLength = path.computeMetrics().first.length;
     final double increment = pathLength / waveCount;
 
@@ -155,8 +155,7 @@ class _LiquidBorderPainter extends CustomPainter {
         final pos = tangent.position;
         final normal =
             Offset(-tangent.vector.dy, tangent.vector.dx).normalized();
-        final waveOffset =
-            normal *
+        final waveOffset = normal *
             waveHeight *
             math.sin(
               (i / increment * math.pi * 2) + animation.value * math.pi * 6,
@@ -179,22 +178,20 @@ class _LiquidBorderPainter extends CustomPainter {
         ..strokeWidth = 1.8,
     );
 
-    // Внутреннее свечение
-    final innerGlowPaint =
-        Paint()
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10)
-          ..shader = LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.blue.withValues(
-                alpha: 0.15 * math.sin(animation.value * math.pi * 2).abs(),
-              ),
-              Colors.purple.withValues(
-                alpha: 0.15 * math.cos(animation.value * math.pi * 2).abs(),
-              ),
-            ],
-          ).createShader(rect);
+    final innerGlowPaint = Paint()
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10)
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.blue.withValues(
+            alpha: 0.15 * math.sin(animation.value * math.pi * 2).abs(),
+          ),
+          Colors.purple.withValues(
+            alpha: 0.15 * math.cos(animation.value * math.pi * 2).abs(),
+          ),
+        ],
+      ).createShader(rect);
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -209,7 +206,6 @@ class _LiquidBorderPainter extends CustomPainter {
   bool shouldRepaint(_LiquidBorderPainter oldDelegate) => true;
 }
 
-// Расширение для нормализации векторов
 extension NormalizedOffset on Offset {
   Offset normalized() {
     final length = distance;

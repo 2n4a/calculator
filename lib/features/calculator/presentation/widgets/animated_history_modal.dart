@@ -75,22 +75,23 @@ class _AnimatedHistoryModalState extends State<AnimatedHistoryModal>
       builder: (context, child) {
         return BackdropFilter(
           filter: ImageFilter.blur(
-            sigmaX: 40 * _opacityAnimation.value,
-            sigmaY: 40 * _opacityAnimation.value,
+            sigmaX: 160 * _opacityAnimation.value,
+            sigmaY: 160 * _opacityAnimation.value,
           ),
-          child: Opacity(
-            opacity: _opacityAnimation.value,
-            child: Transform.translate(
-              offset: Offset(0, _slideAnimation.value),
-              child: Material(
-                color: Colors.transparent,
-                child: Stack(
-                  children: [
-                    if (widget.showWaterBubbles) _buildWaterBubbles(),
-
-                    // Контент истории
-                    _buildHistoryContent(),
-                  ],
+          child: Container(
+            color: Colors.white.withOpacity(0.001),
+            child: Opacity(
+              opacity: _opacityAnimation.value,
+              child: Transform.translate(
+                offset: Offset(0, _slideAnimation.value),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Stack(
+                    children: [
+                      if (widget.showWaterBubbles) _buildWaterBubbles(),
+                      _buildHistoryContent(),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -105,30 +106,35 @@ class _AnimatedHistoryModalState extends State<AnimatedHistoryModal>
       padding: const EdgeInsets.all(16.0),
       child: LiquidGlassContainer(
         borderRadius: 32,
-        backgroundColor: Colors.black.withValues(alpha: 0.15),
+        backgroundColor: Theme.of(context).colorScheme.surface.withOpacity(0.4),
         blur: 30.0,
         child: Column(
           children: [
             _buildHeader(),
             _buildDivider(),
             Expanded(
-              child:
-                  _isLoading
-                      ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white70,
-                          strokeWidth: 3,
-                        ),
-                      )
-                      : RefreshIndicator(
-                        onRefresh: _refreshHistory,
-                        color: Colors.blue,
-                        backgroundColor: Colors.white.withValues(alpha: 0.2),
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-                          child: AnimatedHistoryList(history: _localHistory),
-                        ),
+              child: _isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.9),
+                        strokeWidth: 3,
                       ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _refreshHistory,
+                      color: Colors.blue,
+                      backgroundColor: Theme.of(context)
+                          .colorScheme
+                          .surface
+                          .withOpacity(0.2),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                        child: AnimatedHistoryList(history: _localHistory),
+                      ),
+                    ),
             ),
           ],
         ),
@@ -181,25 +187,18 @@ class _AnimatedHistoryModalState extends State<AnimatedHistoryModal>
             children: [
               Icon(
                 AppIcons.history,
-                color: Colors.white.withValues(alpha: 0.9),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.9),
                 size: 24,
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'История',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
-                  shadows: [
-                    Shadow(
-                      blurRadius: 8.0,
-                      color: Colors.blue,
-                      offset: Offset(0, 0),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      letterSpacing: 0.5,
                     ),
-                  ],
-                ),
               ),
             ],
           ),
@@ -208,7 +207,8 @@ class _AnimatedHistoryModalState extends State<AnimatedHistoryModal>
               IconButton(
                 icon: Icon(
                   MdiIcons.refresh,
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color:
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.9),
                 ),
                 tooltip: 'Обновить историю',
                 onPressed: _refreshHistory,
@@ -216,7 +216,8 @@ class _AnimatedHistoryModalState extends State<AnimatedHistoryModal>
               IconButton(
                 icon: Icon(
                   AppIcons.close,
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color:
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.9),
                 ),
                 onPressed: _closeWithAnimation,
               ),
@@ -304,10 +305,9 @@ class _Bubble {
   }
 
   void draw(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = color
-          ..style = PaintingStyle.fill;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
 
     paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
 

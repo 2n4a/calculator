@@ -17,7 +17,9 @@ class HistoryList extends StatelessWidget {
       itemCount: history.length,
       itemBuilder: (context, index) {
         final item = history[index];
+        final colorScheme = Theme.of(context).colorScheme;
         return Card(
+          color: colorScheme.surface,
           margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
           elevation: 2,
           shape: RoundedRectangleBorder(
@@ -26,19 +28,26 @@ class HistoryList extends StatelessWidget {
           child: ListTile(
             title: Text(
               item.expression,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
             ),
-            subtitle: Text('= ${item.result}'),
-            trailing:
-                item.timestamp != null
-                    ? Text(
-                      '${item.timestamp}',
-                      style: TextStyle(
-                        color: Theme.of(context).hintColor,
-                        fontSize: 12,
-                      ),
-                    )
-                    : null,
+            subtitle: Text(
+              '= ${item.result}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.85),
+                  ),
+            ),
+            trailing: item.timestamp != null
+                ? Text(
+                    '${item.timestamp}',
+                    style: TextStyle(
+                      color: Theme.of(context).hintColor,
+                      fontSize: 12,
+                    ),
+                  )
+                : null,
           ),
         );
       },

@@ -1,3 +1,4 @@
+import datetime
 import math
 from decimal import Decimal
 from typing import Literal
@@ -7,6 +8,9 @@ from math import sqrt, sin, cos, log, tan
 from fastapi import APIRouter, status
 from starlette.responses import JSONResponse
 from pydantic import Field, BaseModel
+
+from models import HistoryItem
+from routes.history import add_new_history_item
 
 from models import (
     BaseRequest,
@@ -292,6 +296,16 @@ def calculate_expression(expression: str):
             stack.append(float(char))
 
     result_of_expression = "{:.8f}".format(stack[0])
+
+    add_new_history_item(
+        HistoryItem(
+            id=0,
+            expression=expression,
+            result=result_of_expression,
+            timestamp=datetime.datetime.now()
+        )
+    )
+
     return CalculationSuccess(value=Decimal(result_of_expression))
 
 

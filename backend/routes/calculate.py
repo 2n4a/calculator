@@ -1,3 +1,4 @@
+import math
 from decimal import Decimal
 from typing import Literal
 
@@ -69,7 +70,7 @@ def refactor_unary_minuses(expression : str):     # refactoring given expression
             new_expression += '0'
 
     if new_expression[0] == '-':
-        new_expression = '0' + new_expression
+        new_expression = '(0' + new_expression + ')'
 
     return new_expression
 
@@ -209,7 +210,93 @@ def get_first(stack):
     return first, stack
 
 
+def calculate_expression(expression: str):
+    operations_priorities = dict()   # priorities of operations
+    operations_priorities['('] = 0
+    operations_priorities['+'] = 1
+    operations_priorities['-'] = 1
+    operations_priorities['*'] = 2
+    operations_priorities['/'] = 2
+    operations_priorities['^'] = 3
+    operations_priorities['l'] = 4
+    operations_priorities['s'] = 4
+    operations_priorities['c'] = 4
+    operations_priorities['t'] = 4
+    operations_priorities['k'] = 4
+
+    flag = True & check_first_symbol_error(expression) & check_brackets_error(expression)
+    if (flag == False):
+        return CalculationError(
+            message="wrong format of expression",
+        )
+
+    expression = refactor_unary_minuses(expression)
+
+    flag = flag & wrong_format_of_expression_error(expression)
+    if (flag == False):
+        return CalculationError(
+            message="wrong format of expression",
+        )
+
+    # main calculations
+    vec = parse_expression(expression, operations_priorities)
+    stack = []
+    for char in vec:
+        if char == '+':
+            first, second, stack = get_first_second(stack)
+            stack.append(first + second)
+        elif char == '-':
+            first, second, stack = get_first_second(stack)
+            stack.append(first - second)
+        elif char == '*':
+            first, second, stack = get_first_second(stack)
+            stack.append(first * second)
+        elif char == '/':
+            first, second, stack = get_first_second(stack)
+            if second == 0:
+                return CalculationError(
+                    message="division by zero",
+                )
+            stack.append(first / second)
+        elif char == '^':
+            first, second, stack = get_first_second(stack)
+            stack.append(first ** second)
+        elif char == "s":
+            first, stack = get_first(stack)
+            stack.append(sin(first))
+        elif char == "c":
+            first, stack = get_first(stack)
+            stack.append(cos(first))
+        elif char == "k":
+            first, stack = get_first(stack)
+            if first < 0:
+                return CalculationError(
+                    message="sqrt of a negative number",
+                )
+            stack.append(sqrt(first))
+        elif char == "t":
+            first, stack = get_first(stack)
+            if (cos(first) == 0):
+                return CalculationError(
+                    message="trigonometry error",
+                )
+            stack.append(tan(first))
+        elif char == "l":
+            first, stack = get_first(stack)
+            if first <= 0:
+                return CalculationError(
+                    message="ln of a non-positive number",
+                )
+            stack.append(log(first))
+        else:
+            stack.append(float(char))
+
+    result_of_expression = "{:.8f}".format(stack[0])
+    return CalculationSuccess(value=Decimal(result_of_expression))
+
+
 router = APIRouter()
+
 @router.post(
     "/calculate",
     summary="Вычисление значения и сохранение в историю",
@@ -225,126 +312,34 @@ router = APIRouter()
     },
 )
 async def calculate(req: CalculationRequest):
-    expression = req.expression
-
-    operations_priorities = dict()   # priorities of operations
-    operations_priorities['('] = 0;
-    operations_priorities['+'] = 1;
-    operations_priorities['-'] = 1;
-    operations_priorities['*'] = 2;
-    operations_priorities['/'] = 2;
-    operations_priorities['^'] = 3;
-    operations_priorities['l'] = 4;
-    operations_priorities['s'] = 4;
-    operations_priorities['c'] = 4;
-    operations_priorities['t'] = 4;
-    operations_priorities['k'] = 4;
-
-    flag = True & check_first_symbol_error(expression) & check_brackets_error(expression)
-    if (flag == False):
+    result = calculate_expression(req.expression)
+    if isinstance(result, CalculationError):
         return JSONResponse(
-            CalculationError(
-                message="wrong format of expression",
-            ).model_dump(),
-            status_code=status.HTTP_412_PRECONDITION_FAILED
+            result.model_dump(),
+            status_code=status.HTTP_400_BAD_REQUEST
         )
+    return result
 
-    expression = refactor_unary_minuses(expression)
 
-    flag = flag & wrong_format_of_expression_error(expression)
-    if (flag == False):
-        return JSONResponse(
-            CalculationError(
-                message="wrong format of expression",
-            ).model_dump(),
-            status_code=status.HTTP_412_PRECONDITION_FAILED
-        )
-
-    # main calculations
-    vec = parse_expression(expression, operations_priorities)
-    stack = []
-    for char in vec:
-        if char == '+':
-            first, second, stack = get_first_second(stack)
-
-            stack.append(first + second)
-        elif char == '-':
-            first, second, stack = get_first_second(stack)
-
-            stack.append(first - second)
-        elif char == '*':
-            first, second, stack = get_first_second(stack)
-
-            stack.append(first * second)
-        elif char == '/':
-            first, second, stack = get_first_second(stack)
-
-            if second == 0:
-                return JSONResponse(
-                    CalculationError(
-                        message="division by zero",
-                    ).model_dump(),
-                    status_code=status.HTTP_412_PRECONDITION_FAILED
-                )
-
-            stack.append(first / second)
-        elif char == '^':
-            first, second, stack = get_first_second(stack)
-
-            stack.append(first ** second)
-        elif char == "s":
-            first, stack = get_first(stack)
-
-            stack.append(sin(first))
-        elif char == "c":
-            first, stack = get_first(stack)
-
-            stack.append(cos(first))
-        elif char == "k":
-            first, stack = get_first(stack)
-
-            if first < 0:
-                return JSONResponse(
-                    CalculationError(
-                        message="sqrt of a negative number",
-                    ).model_dump(),
-                    status_code=status.HTTP_412_PRECONDITION_FAILED
-                )
-
-            stack.append(sqrt(first))
-        elif char == "t":
-            first, stack = get_first(stack)
-
-            if (cos(first) == 0):
-                return JSONResponse(
-                    CalculationError(
-                        message="trigonometry error",
-                    ).model_dump(),
-                    status_code=status.HTTP_412_PRECONDITION_FAILED
-                )
-
-            stack.append(tan(first));
-        elif char == "l":
-            first, stack = get_first(stack)
-
-            if first <= 0:
-                return JSONResponse(
-                    CalculationError(
-                        message="ln of a non-positive number",
-                    ).model_dump(),
-                    status_code=status.HTTP_412_PRECONDITION_FAILED
-                )
-
-            stack.append(log(first))
-        else:
-            stack.append(float(char))
-
-    result_of_expression = "{:.8f}".format(stack[0])
-    return CalculationSuccess(value=Decimal(result_of_expression))
-    #return JSONResponse(
-    #    CalculationError(
-    #        message="Not implemented yet"
-    #    ),
-    #    status_code=status.HTTP_412_PRECONDITION_FAILED
-    #)
-
+def test_calculate():
+    assert calculate_expression("2 + 2").value == 4
+    assert calculate_expression("2 + 2 * 2").value == 6
+    assert calculate_expression("2 * 2 + 2").value == 6
+    assert calculate_expression("2 * (2 + 2)").value == 8
+    assert calculate_expression("2 + 2 * 2 ^ 2").value == 10
+    assert calculate_expression("2 ^ 2 * 2 + 2").value == 10
+    assert calculate_expression("2 ^ (2 * (2 + 2))").value == 256
+    assert calculate_expression("sqrt(4)").value == 2
+    assert calculate_expression("sqrt(4) + 2").value == 4
+    assert calculate_expression("sqrt(4) * 2").value == 4
+    assert calculate_expression("sqrt(4 + 5)").value == 3
+    assert calculate_expression("sin(0)").value == 0
+    assert calculate_expression("cos(0)").value == 1
+    assert calculate_expression("tg(0)").value == 0
+    assert calculate_expression("ln(1)").value == 0
+    assert abs(calculate_expression("ln(2)").value - Decimal(math.log(2))) < Decimal('1e-7')
+    assert calculate_expression("sin(0) + cos(0) + tg(0) + ln(1)").value == 1
+    assert calculate_expression("2 + (-2)").value == 0
+    assert calculate_expression("(-2) + 2").value == 0
+    assert calculate_expression("2 - (-2)").value == 4
+    assert calculate_expression("2 * (-2)").value == -4

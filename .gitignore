@@ -179,3 +179,13 @@ cython_debug/
 /frontend/macos/Flutter/GeneratedPluginRegistrant.swift
 /frontend/linux/flutter/ephemeral/.plugin_symlinks/path_provider_linux/
 /frontend/windows/flutter/ephemeral/.plugin_symlinks/path_provider_windows/
+/.flutter-plugins-dependencies
+/ios/Flutter/flutter_export_environment.sh
+/ios/Flutter/ephemeral/flutter_lldb_helper.py
+/ios/Flutter/ephemeral/flutter_lldbinit
+/ios/Flutter/Generated.xcconfig
+/ios/Runner/GeneratedPluginRegistrant.h
+/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+/ios/Runner/GeneratedPluginRegistrant.m
+/android/local.properties
+/ios/Podfile

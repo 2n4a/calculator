@@ -232,151 +232,126 @@ class _CalculatorPageState extends State<CalculatorPage> {
                     horizontal: 24,
                     vertical: 32,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListenableBuilder(
-                        listenable: widget.controller,
-                        builder: (context, child) {
-                          print('🔄 TextField ListenableBuilder перестроен');
-                          return TextField(
-                            controller: _textController,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyLarge
-                                ?.copyWith(fontSize: 22),
-                            maxLines: null,
-                            minLines: 1,
-                            keyboardType: TextInputType.multiline,
-                            decoration: InputDecoration(
-                              prefixIcon: Icon(AppIcons.edit,
-                                  color: Theme.of(context).iconTheme.color),
-                              labelText: 'Введите выражение',
-                              border: OutlineInputBorder(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    ListenableBuilder(
+                      listenable: widget.controller,
+                      builder: (context, child) {
+                        print('🔄 TextField ListenableBuilder перестроен');
+                        return TextField(
+                          controller: _textController,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyLarge
+                              ?.copyWith(fontSize: 22),
+                          maxLines: null,
+                          minLines: 1,
+                          keyboardType: TextInputType.multiline,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(AppIcons.edit,
+                                color: Theme.of(context).iconTheme.color),
+                            labelText: 'Введите выражение',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            filled: true,
+                            fillColor: Theme.of(context)
+                                .colorScheme
+                                .background
+                                .withOpacity(0.18),
+                            alignLabelWithHint: true,
+                          ),
+                          onChanged: (value) {
+                            widget.controller.setExpression(value);
+                          },
+                          onSubmitted: (_) => widget.controller.calculate(),
+                          autofocus: false,
+                          textInputAction: TextInputAction.done,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    ListenableBuilder(
+                      listenable: widget.controller,
+                      builder: (context, child) {
+                        print(
+                          '🔄 Button ListenableBuilder перестроен - loading: ${widget.controller.loading}',
+                        );
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            icon: Icon(AppIcons.play, size: 28),
+                            label: widget.controller.loading
+                                ? const SizedBox(
+                                    width: 28,
+                                    height: 28,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 3,
+                                    ),
+                                  )
+                                : const Text('Вычислить'),
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              filled: true,
-                              fillColor: Theme.of(context)
-                                  .colorScheme
-                                  .background
-                                  .withOpacity(0.18),
-                              alignLabelWithHint: true,
-                            ),
-                            onChanged: (value) {
-                              widget.controller.setExpression(value);
-                            },
-                            onSubmitted: (_) => widget.controller.calculate(),
-                            autofocus: false,
-                            textInputAction: TextInputAction.done,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      ListenableBuilder(
-                        listenable: widget.controller,
-                        builder: (context, child) {
-                          print(
-                            '🔄 Button ListenableBuilder перестроен - loading: ${widget.controller.loading}',
-                          );
-                          return SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton.icon(
-                              icon: Icon(AppIcons.play, size: 28),
-                              label: widget.controller.loading
-                                  ? const SizedBox(
-                                      width: 28,
-                                      height: 28,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 3,
-                                      ),
-                                    )
-                                  : const Text('Вычислить'),
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 6,
-                                backgroundColor:
-                                    Colors.blue.shade700.withOpacity(0.85),
-                                foregroundColor:
-                                    Theme.of(context).colorScheme.onPrimary,
-                                textStyle: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                shadowColor: Colors.blueAccent.withValues(
-                                  alpha: 0.3,
-                                ),
+                              elevation: 6,
+                              backgroundColor:
+                                  Colors.blue.shade700.withOpacity(0.85),
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.onPrimary,
+                              textStyle: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
                               ),
-                              onPressed: widget.controller.loading
-                                  ? null
-                                  : widget.controller.calculate,
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      ListenableBuilder(
-                        listenable: widget.controller,
-                        builder: (context, child) {
-                          print(
-                            '🔄 Result ListenableBuilder перестроен - result: "${widget.controller.result}"',
-                          );
-                          return AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 500),
-                            transitionBuilder: (child, anim) => ScaleTransition(
-                              scale: anim,
-                              child: FadeTransition(
-                                opacity: anim,
-                                child: child,
+                              shadowColor: Colors.blueAccent.withValues(
+                                alpha: 0.3,
                               ),
                             ),
-                            child: widget.controller.result.isNotEmpty
-                                ? Column(
+                            onPressed: widget.controller.loading
+                                ? null
+                                : widget.controller.calculate,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    ListenableBuilder(
+                      listenable: widget.controller,
+                      builder: (context, child) {
+                        print(
+                          '🔄 Result ListenableBuilder перестроен - result: "${widget.controller.result}"',
+                        );
+                        return AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          transitionBuilder: (child, anim) => ScaleTransition(
+                            scale: anim,
+                            child: FadeTransition(
+                              opacity: anim,
+                              child: child,
+                            ),
+                          ),
+                          child: widget.controller.result.isNotEmpty
+                              ? Container(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
+                                  child: Column(
                                     key: ValueKey(widget.controller.result),
                                     children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            AppIcons.result,
-                                            color: Colors.cyanAccent.shade400,
-                                            size: 32,
-                                            shadows: [
-                                              Shadow(
-                                                color: Colors.blueAccent
-                                                    .withValues(alpha: 0.3),
-                                                blurRadius: 8,
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            'Результат:',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleMedium
-                                                ?.copyWith(
-                                                    fontSize: 18,
-                                                    fontWeight:
-                                                        FontWeight.w500),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8),
                                       SelectableText(
                                         widget.controller.result,
                                         style: Theme.of(context)
                                             .textTheme
                                             .headlineLarge
                                             ?.copyWith(
-                                          fontSize: 32,
+                                          fontSize: double.tryParse(widget
+                                                      .controller.result) !=
+                                                  null
+                                              ? 32
+                                              : 20,
                                           color: Theme.of(context)
                                               .colorScheme
                                               .primary,
-                                          fontWeight: FontWeight.bold,
                                           shadows: [
                                             Shadow(
                                               color: Colors.cyanAccent
@@ -387,22 +362,22 @@ class _CalculatorPageState extends State<CalculatorPage> {
                                         ),
                                       ),
                                     ],
-                                  )
-                                : const SizedBox.shrink(),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 32),
-                      Text(
-                        'Введите выражение и нажмите "Вычислить"\nили Enter',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: Theme.of(context).hintColor),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Введите выражение и нажмите "Вычислить"\nили Enter',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Theme.of(context).hintColor),
+                      textAlign: TextAlign.center,
+                    ),
+                  ]),
                 ),
               ),
             ),

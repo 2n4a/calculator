@@ -189,3 +189,6 @@ cython_debug/
 /ios/Runner/GeneratedPluginRegistrant.m
 /android/local.properties
 /ios/Podfile
+.github/workflows/flutter-release.yml
+.gitignore
+.gitignore

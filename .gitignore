@@ -165,3 +165,17 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+/frontend/macos/Flutter/ephemeral/Flutter-Generated.xcconfig
+/frontend/ios/Flutter/flutter_export_environment.sh
+/frontend/macos/Flutter/ephemeral/flutter_export_environment.sh
+/frontend/ios/Flutter/ephemeral/flutter_lldb_helper.py
+/frontend/ios/Flutter/ephemeral/flutter_lldbinit
+/frontend/ios/Flutter/Generated.xcconfig
+/frontend/linux/flutter/generated_plugin_registrant.cc
+/frontend/linux/flutter/generated_plugin_registrant.h
+/frontend/linux/flutter/generated_plugins.cmake
+/frontend/ios/Runner/GeneratedPluginRegistrant.h
+/frontend/ios/Runner/GeneratedPluginRegistrant.m
+/frontend/macos/Flutter/GeneratedPluginRegistrant.swift
+/frontend/linux/flutter/ephemeral/.plugin_symlinks/path_provider_linux/
+/frontend/windows/flutter/ephemeral/.plugin_symlinks/path_provider_windows/

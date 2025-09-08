@@ -34,6 +34,22 @@
         group: root
         mode: "0755"
 
+    - name: Create secret directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}/secrets"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Write gen api key
+      ansible.builtin.copy:
+        content: "{{ gen_api_key }}"
+        dest: "{{ app_dir }}/secrets/gen_api_key"
+        owner: root
+        group: root
+        mode: "0600"
+
     - name: Copy production compose file to server
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/compose-production.yaml"

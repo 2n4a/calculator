@@ -3,3 +3,14 @@ services:
     image: ghcr.io/2n4a/calculator-backend:latest
     ports:
       - "8001:8001"
+    secrets:
+      - source: gen_api_key
+        target: /run/secrets/gen_api_key
+  frontend:
+    image: ghcr.io/2n4a/calculator-web:latest
+    ports:
+      - "8002:8002"
+
+secrets:
+  gen_api_key:
+    file: ./secrets/gen_api_key

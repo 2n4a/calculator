@@ -1,0 +1,30 @@
+# Reduce Docker build context for Flutter web build
+# Keep: lib/, assets/, pubspec.*, web/, openapi/ (path dependency)
+
+# VCS
+.git
+.gitignore
+
+# Dart / Flutter tooling caches
+**/.dart_tool/
+**/.packages
+.packages
+.dart_tool
+
+# Build outputs
+**/build/
+
+# Tests (not needed for release image)
+**/test/
+
+# Native platform directories not required for web build
+android/
+ios/
+macos/
+windows/
+linux/
+
+# Misc
+*.iml
+*.log
+

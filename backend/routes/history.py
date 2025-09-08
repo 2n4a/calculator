@@ -1,4 +1,5 @@
 from typing import Literal, Annotated
+import logging
 
 from fastapi import APIRouter, Query, status
 from pydantic import Field, BaseModel
@@ -11,6 +12,8 @@ import sqlite3
 history_db_name = 'history.db'
 
 table_name = 'history'
+
+logger = logging.getLogger("calculator.history")
 
 
 class HistoryParams(BaseModel):
@@ -25,6 +28,7 @@ class HistoryParams(BaseModel):
 
 
 def handle_history_table_create():
+    logger.info("Creating history table if not exists.")
     connection = sqlite3.connect(history_db_name)
     cursor = connection.cursor()
     cursor.execute(
@@ -41,6 +45,7 @@ def handle_history_table_create():
 
 
 def add_new_history_item(item: HistoryItem):
+    logger.info(f"Adding new history item: {item.expression} = {item.result}")
     connection = sqlite3.connect(history_db_name)
     cursor = connection.cursor()
 
@@ -72,6 +77,7 @@ def add_new_history_item(item: HistoryItem):
 
 
 def get_history(cursor: sqlite3.Cursor, query: HistoryParams):
+    logger.info(f"Fetching history: limit={query.limit}, offset={query.offset}, order={query.order}")
     from_ts = query.from_timestamp
     to_ts = query.to_timestamp
     order = query.order

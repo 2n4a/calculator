@@ -4,6 +4,7 @@ import math
 import dataclasses
 from decimal import Decimal
 from typing import Literal, Callable
+import logging
 
 from llm import ask_llm
 
@@ -20,6 +21,9 @@ from models import (
     BaseErrorResponse,
     Span,
 )
+
+
+logger = logging.getLogger("calculator.calculate")
 
 
 class OperandMeta(BaseModel):
@@ -116,7 +120,7 @@ PREFIX_OPERATORS = {
 
 SUFFIX_OPERATORS = {
     op.op: op for op in [
-        UnaryOperator(80, '!', lambda x: Decimal(math.factorial(int(x)))),
+        UnaryOperator(80, '!', lambda x: Decimal(math.gamma(float(x) + 1))),
         UnaryOperator(69, '|>sqrt', lambda x: x.sqrt()),
         UnaryOperator(69, '|>sin', lambda x: Decimal(math.sin(float(x)))),
         UnaryOperator(69, '|>cos', lambda x: Decimal(math.cos(float(x)))),
@@ -245,6 +249,7 @@ def tokenize(expression: str, until: str = None, start_from: int = 0) -> tuple[i
                     i += 1
                 else:
                     parts[-1] += expression[i]
+                    i += 1
             tokens.append(LlmQueryToken(span=Span(start=start, end=i), parts=parts))
             continue
 
@@ -420,7 +425,7 @@ async def calculate_expression(expression: str):
     try:
         _, tokens = tokenize(expression)
         ast = parse_expression(tokens)
-        value = eval_ast(ast)
+        value = await eval_ast(ast)
     except CalculationException as e:
         return CalculationError(
             message=e.message,
@@ -450,13 +455,27 @@ router = APIRouter()
     },
 )
 async def calculate(req: CalculationRequest):
+    if len(req.expression) > 5000:
+        return JSONResponse(
+            CalculationError(
+                message="Expression too long",
+                span=Span(start=5000, end=len(req.expression)),
+                operator_span=None,
+                operands=None,
+                parenthesized=None,
+            ).model_dump(),
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+    logger.info(f"Received calculation request: {req.expression}")
     result = await calculate_expression(req.expression)
     if isinstance(result, CalculationError):
+        logger.error(f"Calculation error: {result.message} (span={result.span})")
         return JSONResponse(
             result.model_dump(),
             status_code=status.HTTP_400_BAD_REQUEST
         )
     elif req.record:
+        logger.info(f"Storing calculation result for expression: {req.expression}")
         add_new_history_item(
             HistoryItem(
                 id=0,
@@ -465,7 +484,7 @@ async def calculate(req: CalculationRequest):
                 timestamp=datetime.datetime.now()
             )
         )
-
+    logger.info(f"Calculation result: {getattr(result, 'value', None)} for expression: {req.expression}")
     return result
 
 
@@ -500,3 +519,9 @@ async def test_calculate():
     assert (await calculate_expression("--1 |>log")).value == 0
     assert (await calculate_expression("5!")).value == 120
     assert (await calculate_expression("5 !")).value == 120
+
+
+def test_parsing():
+    tokens = tokenize("ai(Сколько будет 2 + 2?)")[1]
+    assert len(tokens) == 1
+    _ = parse_expression(tokens)

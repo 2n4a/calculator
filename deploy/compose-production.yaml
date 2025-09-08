@@ -6,6 +6,8 @@ services:
     secrets:
       - source: gen_api_key
         target: /run/secrets/gen_api_key
+    volumes:
+      - /opt/calculator/history.db:/history.db
   frontend:
     image: ghcr.io/2n4a/calculator-web:latest
     ports:

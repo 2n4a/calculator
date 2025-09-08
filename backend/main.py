@@ -4,7 +4,6 @@ import fastapi.middleware.cors
 from routes.calculate import router as calculate_router
 from routes.history import router as history_router
 from routes.liveness import router as liveness_router
-from routes.assistant import router as assistant_router
 
 dotenv.load_dotenv()
 
@@ -22,4 +21,3 @@ app.add_middleware(
 app.include_router(liveness_router)
 app.include_router(calculate_router)
 app.include_router(history_router)
-app.include_router(assistant_router)

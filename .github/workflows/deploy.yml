@@ -11,6 +11,9 @@ on:
 jobs:
   frontend-build-web:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,6 +52,9 @@ jobs:
 
   frontend-build-apk:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

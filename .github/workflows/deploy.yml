@@ -124,6 +124,8 @@ jobs:
   release-apk:
     needs: frontend-build-apk
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download APK artifact
         uses: actions/download-artifact@v4

@@ -1,4 +1,6 @@
 .idea
+*.db
+frontend/.flutter-plugins-dependencies
 
 
 ### Python template

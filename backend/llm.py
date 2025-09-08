@@ -2,7 +2,8 @@
 from __future__ import annotations
 import os, re, time
 from typing import Tuple, Dict
-import requests  # HTTP для gen-api
+import aiohttp  # HTTP для gen-api
+import logging
 
 def _load_key() -> str | None:
     p = "/run/secrets/gen_api_key"
@@ -21,9 +22,7 @@ GEN_API_KEY = _load_key()
 GEN_API_MODEL = os.getenv("GEN_API_MODEL", "gpt-4.1-nano")
 GEN_API_ENDPOINT = os.getenv("GEN_API_ENDPOINT", "https://api.gen-api.ru/api/v1/networks/gpt-4-1")
 
-#тут еще нужно закэшировать в бд, но пока ветка бд еще не готова
-# кэш в памяти (TTL 24ч)
-_CACHE_TTL = 24 * 3600
+_CACHE_TTL = 1
 _CACHE: Dict[str, tuple[float, str]] = {}
 
 _SYSTEM_PROMPT = (
@@ -31,13 +30,14 @@ _SYSTEM_PROMPT = (
     "Верни ТОЛЬКО одно математическое выражение, пригодное для локального вычисления. "
     "Без слов и единиц измерения\величины. Разрешены цифры, точка, + - * / ^ и скобки. "
     "Если нужно — выполни конвертацию/поиск и подставь числа. "
-    "Примеры: 324+100, 2+2*2, (299792458/1000)."
+    "Примеры: 324+100, 2+2*2, (299792458/1000), 3.1425926."
 )
 _EXPR_RX = re.compile(r'^[\d\s+*\-\/^().]+$')
 def _valid_expr(s: str) -> bool:
     return bool(s.strip()) and _EXPR_RX.match(s.strip()) is not None
 
-def ask_llm(request: str) -> Tuple[bool, str]:
+logger = logging.getLogger("calculator.llm")
+async def ask_llm(request: str) -> Tuple[bool, str]:
     """Вернёт (True, '<выражение>') либо (False, '<ошибка>')."""
     if not request or not request.strip():
         return False, "пустой запрос"
@@ -45,9 +45,11 @@ def ask_llm(request: str) -> Tuple[bool, str]:
     now = time.time()
     cached = _CACHE.get(request)
     if cached and now - cached[0] < _CACHE_TTL:
+        logger.info(f"LLM cache hit for request: {request}")
         return True, cached[1]
 
     if not GEN_API_KEY:
+        logger.error("AI key is not configured")
         return False, "AI key is not configured"
 
     payload = {
@@ -67,18 +69,18 @@ def ask_llm(request: str) -> Tuple[bool, str]:
     }
 
     try:
-        r = requests.post(GEN_API_ENDPOINT, json=payload, headers=headers, timeout=30)
+        async with aiohttp.ClientSession() as session:
+            async with session.post(GEN_API_ENDPOINT, json=payload, headers=headers, timeout=30) as response:
+                status_code = response.status
+                if status_code == 200:
+                    data = await response.json()
+                else:
+                    txt = (await response.text() or "")[:200]
+                    logger.error(f"AI provider error: {txt}")
+                    return False, f"AI provider error: {txt}"
     except Exception as e:
+        logger.error(f"Network error to LLM: {e}")
         return False, f"ошибка сети к LLM: {e}"
-    if r.status_code != 200:
-        return False, f"AI provider error: {r.text[:200]}"
-
-    try:
-        data = r.json()
-    except ValueError:
-        txt = (r.text or "")[:200]
-        return False, f"некорректный JSON от LLM: {txt}"
-
 
     # DEBUG при необходимости: export DEBUG_LLM=1
     if os.getenv("DEBUG_LLM") == "1":
@@ -145,6 +147,7 @@ def ask_llm(request: str) -> Tuple[bool, str]:
                 break
 
     if not content:
+        logger.error("Empty response from LLM")
         return False, "пустой ответ LLM"
 
     expr = (content or "").strip().strip("`").replace(",", ".")
@@ -153,7 +156,9 @@ def ask_llm(request: str) -> Tuple[bool, str]:
         if m:
             expr = m.group(0)
     if not _valid_expr(expr):
+        logger.error(f"LLM returned invalid expression: {expr}")
         return False, "LLM вернул невычислимое выражение"
 
+    logger.info(f"LLM response for request '{request}': {expr}")
     _CACHE[request] = (now, expr)
     return True, expr

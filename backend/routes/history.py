@@ -37,19 +37,18 @@ def handle_history_table_create():
 
     connection.commit()
 
-    connection.close()
+    return connection, cursor
 
 
 def add_new_history_item(item: HistoryItem):
-    connection = sqlite3.connect(history_db_name)
-    cursor = connection.cursor()
+    global bd_connection, bd_cursor
 
     expression: str = item.expression
     result: str = item.result
     timestamp: datetime.datetime = item.timestamp
 
     try:
-        cursor.execute(
+        bd_cursor.execute(
             f"""
             INSERT INTO {table_name} (query, response, created_at)
             VALUES (?, ?, ?)
@@ -57,8 +56,8 @@ def add_new_history_item(item: HistoryItem):
             (expression, result, timestamp.timestamp())
         )
     except sqlite3.OperationalError:
-        handle_history_table_create()
-        cursor.execute(
+        bd_connection, bd_cursor = handle_history_table_create()
+        bd_cursor.execute(
             f"""
                     INSERT INTO {table_name} (query, response, created_at)
                     VALUES (?, ?, ?)
@@ -66,12 +65,12 @@ def add_new_history_item(item: HistoryItem):
             (expression, result, timestamp.timestamp())
         )
 
-    connection.commit()
-
-    connection.close()
+    bd_connection.commit()
 
 
-def get_history(cursor: sqlite3.Cursor, query: HistoryParams):
+def get_history(query: HistoryParams):
+    global bd_connection, bd_cursor
+
     from_ts = query.from_timestamp
     to_ts = query.to_timestamp
     order = query.order
@@ -100,7 +99,7 @@ def get_history(cursor: sqlite3.Cursor, query: HistoryParams):
     additional_params_sql = " ".join(additional_params) if additional_params else ""
 
     try:
-        raw_data = cursor.execute(
+        raw_data = bd_cursor.execute(
             f"""
                             SELECT id, query, response, created_at
                             FROM {table_name}
@@ -109,7 +108,7 @@ def get_history(cursor: sqlite3.Cursor, query: HistoryParams):
                             {additional_params_sql}
                             """)
     except sqlite3.OperationalError:
-        handle_history_table_create()
+        bd_connection, bd_cursor = handle_history_table_create()
         return []
 
     result = []
@@ -126,10 +125,15 @@ def get_history(cursor: sqlite3.Cursor, query: HistoryParams):
 
     return result
 
+def bd_connection_shutdown():
+    global bd_connection
+    
+    bd_connection.commit()
+    bd_connection.close()
 
 router = APIRouter()
 
-handle_history_table_create()
+bd_connection, bd_cursor = handle_history_table_create()
 
 
 @router.get(
@@ -143,11 +147,6 @@ handle_history_table_create()
     },
 )
 async def history(query: Annotated[HistoryParams, Query()]):
-    connection = sqlite3.connect(history_db_name)
-    cursor = connection.cursor()
-
-    data = get_history(cursor, query)
-
-    connection.close()
+    data = get_history(query)
 
     return data

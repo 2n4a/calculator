@@ -214,7 +214,10 @@ def get_first(stack):
     return first, stack
 
 
-def calculate_expression(expression: str):
+def calculate_expression(req: CalculationRequest):
+    expression: str = req.expression
+    record: bool = req.record
+
     operations_priorities = dict()   # priorities of operations
     operations_priorities['('] = 0
     operations_priorities['+'] = 1
@@ -297,14 +300,15 @@ def calculate_expression(expression: str):
 
     result_of_expression = "{:.8f}".format(stack[0])
 
-    add_new_history_item(
-        HistoryItem(
-            id=0,
-            expression=expression,
-            result=result_of_expression,
-            timestamp=datetime.datetime.now()
+    if record:
+        add_new_history_item(
+            HistoryItem(
+                id=0,
+                expression=expression,
+                result=result_of_expression,
+                timestamp=datetime.datetime.now()
+            )
         )
-    )
 
     return CalculationSuccess(value=Decimal(result_of_expression))
 
@@ -326,7 +330,7 @@ router = APIRouter()
     },
 )
 async def calculate(req: CalculationRequest):
-    result = calculate_expression(req.expression)
+    result = calculate_expression(req)
     if isinstance(result, CalculationError):
         return JSONResponse(
             result.model_dump(),

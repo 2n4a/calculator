@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:calculator/features/calculator/domain/entities/calculation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'liquid_glass_container.dart';
 
 class AnimatedHistoryList extends StatelessWidget {
@@ -163,6 +164,7 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                           ),
                         );
                       }
+
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -177,6 +179,7 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                             style:
                                 Theme.of(context).textTheme.bodyLarge?.copyWith(
                               fontSize: 18,
+
                               fontWeight: FontWeight.bold,
                               color: colorScheme.onSurface.withOpacity(0.95),
                               shadows: [
@@ -200,6 +203,7 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                                         .bodyMedium
                                         ?.copyWith(
                                           fontSize: 17,
+
                                           fontWeight: FontWeight.w500,
                                           color: colorScheme.onSurface
                                               .withOpacity(0.7),
@@ -226,6 +230,7 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                                           .bodyMedium
                                           ?.copyWith(
                                             fontSize: 17,
+
                                             fontWeight: FontWeight.bold,
                                             color: colorScheme.onPrimary,
                                           ),
@@ -239,12 +244,14 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                                       .toLocal()
                                       .toString()
                                       .split('.')[0],
+
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
                                       ?.copyWith(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w500,
+
                                         color: colorScheme.onSurface
                                             .withOpacity(0.6),
                                       ),

@@ -2,7 +2,7 @@
 from __future__ import annotations
 import os, re, time
 from typing import Tuple, Dict
-import requests  # HTTP для gen-api
+import aiohttp  # HTTP для gen-api
 
 def _load_key() -> str | None:
     p = "/run/secrets/gen_api_key"
@@ -31,13 +31,13 @@ _SYSTEM_PROMPT = (
     "Верни ТОЛЬКО одно математическое выражение, пригодное для локального вычисления. "
     "Без слов и единиц измерения\величины. Разрешены цифры, точка, + - * / ^ и скобки. "
     "Если нужно — выполни конвертацию/поиск и подставь числа. "
-    "Примеры: 324+100, 2+2*2, (299792458/1000)."
+    "Примеры: 324+100, 2+2*2, (299792458/1000), 3.1425926."
 )
 _EXPR_RX = re.compile(r'^[\d\s+*\-\/^().]+$')
 def _valid_expr(s: str) -> bool:
     return bool(s.strip()) and _EXPR_RX.match(s.strip()) is not None
 
-def ask_llm(request: str) -> Tuple[bool, str]:
+async def ask_llm(request: str) -> Tuple[bool, str]:
     """Вернёт (True, '<выражение>') либо (False, '<ошибка>')."""
     if not request or not request.strip():
         return False, "пустой запрос"
@@ -67,7 +67,7 @@ def ask_llm(request: str) -> Tuple[bool, str]:
     }
 
     try:
-        r = requests.post(GEN_API_ENDPOINT, json=payload, headers=headers, timeout=30)
+        r = aiohttp.post(GEN_API_ENDPOINT, json=payload, headers=headers, timeout=30)
     except Exception as e:
         return False, f"ошибка сети к LLM: {e}"
     if r.status_code != 200:

@@ -15,6 +15,10 @@ class Span(BaseModel):
     start: int = Field(..., description="Начальная позиция (включительно, 0-индексация).")
     end: int = Field(..., description="Конечная позиция (исключительно, 0-индексация).")
 
+    def __or__(self, other):
+        """Объединение двух диапазонов."""
+        return Span(start=min(self.start, other.start), end=max(self.end, other.end))
+
 
 class BaseRequest(BaseModel):
     pass

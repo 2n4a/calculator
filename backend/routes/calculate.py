@@ -3,6 +3,9 @@ import math
 from decimal import Decimal
 from typing import Literal
 
+import re
+from llm import ask_llm
+
 from math import sqrt, sin, cos, log, tan
 
 from fastapi import APIRouter, status
@@ -18,6 +21,39 @@ from models import (
     BaseErrorResponse,
     Span,
 )
+
+
+
+_AI_RX = re.compile(r'AI\((.*?)\)', re.IGNORECASE | re.DOTALL)
+
+def _resolve_ai(expr: str) -> tuple[str, dict]:
+    """
+    Заменяет все AI(...) на числа из LLM.
+    """
+    replacements: dict[str, str] = {}
+
+    def _sub(m: re.Match) -> str:
+        q = m.group(1).strip()
+        ok, val = ask_llm(q)
+        if not ok:
+            raise ValueError(val)
+
+        val_str = str(val).strip()
+
+        if val_str.endswith(".0"):
+            val_str = val_str[:-2]
+        elif "." in val_str:
+            try:
+                val_str = str(int(float(val_str)))
+            except Exception:
+                pass
+
+        replacements[q] = val_str
+        return f"({val_str})"
+
+    resolved = _AI_RX.sub(_sub, expr)
+    return resolved, replacements
+
 
 
 class OperandMeta(BaseModel):

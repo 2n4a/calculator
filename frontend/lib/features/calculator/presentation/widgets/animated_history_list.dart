@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:calculator/features/calculator/domain/entities/calculation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'liquid_glass_container.dart';
 
 class AnimatedHistoryList extends StatelessWidget {
@@ -136,19 +137,32 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                   blur: 16.0 + widget.random.nextDouble() * 4,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(18),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            "Скопировано: ${widget.item.expression} = ${widget.item.result}",
+                    onTap: () async {
+                      final textToCopy =
+                          "${widget.item.expression} = ${widget.item.result}";
+                      await Clipboard.setData(ClipboardData(text: textToCopy));
+
+                      if (context.mounted) {
+                        final scaffold = ScaffoldMessenger.of(context);
+                        scaffold.clearSnackBars();
+                        scaffold.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              "Скопировано: $textToCopy",
+                              style: TextStyle(
+                                color: colorScheme.onSecondaryContainer,
+                              ),
+                            ),
+                            backgroundColor:
+                                colorScheme.secondaryContainer.withOpacity(0.7),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            duration: const Duration(milliseconds: 1500),
                           ),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          duration: const Duration(seconds: 1),
-                        ),
-                      );
+                        );
+                      }
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -162,7 +176,7 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                             widget.item.expression,
                             style:
                                 Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: colorScheme.onSurface.withOpacity(0.95),
                               shadows: [
@@ -185,7 +199,7 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                                         .textTheme
                                         .bodyMedium
                                         ?.copyWith(
-                                          fontSize: 16,
+                                          fontSize: 17,
                                           fontWeight: FontWeight.w500,
                                           color: colorScheme.onSurface
                                               .withOpacity(0.7),
@@ -211,7 +225,7 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                                           .textTheme
                                           .bodyMedium
                                           ?.copyWith(
-                                            fontSize: 16,
+                                            fontSize: 17,
                                             fontWeight: FontWeight.bold,
                                             color: colorScheme.onPrimary,
                                           ),
@@ -221,12 +235,16 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
                               ),
                               if (widget.item.timestamp != null)
                                 Text(
-                                  widget.item.timestamp!.toString(),
+                                  widget.item.timestamp!
+                                      .toLocal()
+                                      .toString()
+                                      .split('.')[0],
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
                                       ?.copyWith(
-                                        fontSize: 12,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
                                         color: colorScheme.onSurface
                                             .withOpacity(0.6),
                                       ),

@@ -87,6 +87,12 @@ class UnaryOperator:
     fn: Callable[[Decimal], Decimal]
 
 
+CONSTANTS = {
+    "pi": Decimal(math.pi),
+    "e": Decimal(math.e),
+}
+
+
 BINARY_OPERATORS = {op.op: op for op in [
     BinaryOperator((50, 51), '+', lambda x, y: x + y),
     BinaryOperator((50, 51), '-', lambda x, y: x - y),
@@ -165,6 +171,16 @@ def tokenize(expression: str, until: str = None, start_from: int = 0) -> tuple[i
                     has_dot = True
                 i += 1
             tokens.append(NumberToken(span=Span(start=start, end=i), value=Decimal(expression[start:i])))
+            continue
+
+        found_constant = False
+        for name, value in CONSTANTS.items():
+            if expression.startswith(name, i):
+                tokens.append(NumberToken(span=Span(start=i, end=i + len(name)), value=value))
+                i += len(name)
+                found_constant = True
+                break
+        if found_constant:
             continue
 
         found_operator = False
@@ -323,7 +339,7 @@ def parse_expression(tokens: list[Token]) -> Ast:
         elif isinstance(token, OperatorToken) and token.op in PREFIX_OPERATORS:
             op = token.op
             operator = PREFIX_OPERATORS[op]
-            index, rhs = parse_bp(index + 1, operator.binding_power)
+            index, rhs = parse_bp(index + 1, operator.binding_power - token.right_spaces * 100)
             lhs = UnaryOp(span=token.span | rhs.span, op=operator, operand=rhs, prefix=True)
         elif isinstance(token, LlmQueryToken):
             parts: list[str | Ast] = []
@@ -347,7 +363,8 @@ def parse_expression(tokens: list[Token]) -> Ast:
             if isinstance(token, OperatorToken) and token.op in SUFFIX_OPERATORS:
                 op = token.op
                 operator = SUFFIX_OPERATORS[op]
-                if operator.binding_power < min_bp:
+                bp = operator.binding_power - token.left_spaces * 100
+                if bp < min_bp:
                     break
                 lhs = UnaryOp(span=lhs.span | token.span, op=operator, operand=lhs, prefix=False)
                 index += 1
@@ -356,6 +373,8 @@ def parse_expression(tokens: list[Token]) -> Ast:
                 op = token.op
                 operator = BINARY_OPERATORS[op]
                 lbp, rbp = operator.binding_power
+                lbp -= 100 * token.left_spaces
+                rbp -= 100 * token.right_spaces
                 if lbp < min_bp:
                     break
                 index, rhs = parse_bp(index + 1, rbp)
@@ -518,6 +537,13 @@ async def test_calculate():
     assert (await calculate_expression("--1 |>log")).value == 0
     assert (await calculate_expression("5!")).value == 120
     assert (await calculate_expression("5 !")).value == 120
+    assert (await calculate_expression("2+2 * 2")).value == 8
+    assert (await calculate_expression("2+2*2")).value == 6
+    assert (await calculate_expression("4-2 ^2 + 5-3 ^ 2  ^ 1/3")).value == 2
+    assert (await calculate_expression("2-1 |>log")).value == 0
+    assert (await calculate_expression("log 2-1")).value == 0
+    assert (await calculate_expression("sin pi/2")).value == 1
+    assert abs((await calculate_expression("sin pi / 2")).value) < 1e-9
 
 
 def test_parsing():

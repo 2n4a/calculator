@@ -480,13 +480,12 @@ async def calculate(req: CalculationRequest):
             HistoryItem(
                 id=0,
                 expression=req.expression,
-                result=result.result,
+                result=str(result.value),
                 timestamp=datetime.datetime.now()
             )
         )
     logger.info(f"Calculation result: {getattr(result, 'value', None)} for expression: {req.expression}")
     return result
-
 
 async def test_calculate():
     assert (await calculate_expression("2 + 2")).value == 4

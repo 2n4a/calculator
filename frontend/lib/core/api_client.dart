@@ -1,15 +1,46 @@
 import 'package:openapi/openapi.dart';
+import 'package:dio/dio.dart';
 
 class ApiClientProvider {
   static Openapi? _client;
 
-  static Openapi getClient() {
-    const String backendUrl = String.fromEnvironment(
-      'BACKEND_URL',
-      defaultValue: 'http://127.0.0.1:8000',
-    );
+  static String get defaultBackendUrl {
+    return 'https://calc.elteammate.space/api';
+  }
 
-    _client ??= Openapi(basePathOverride: backendUrl);
+  static Openapi getClient() {
+    final String backendUrl = const String.fromEnvironment(
+      'BACKEND_URL',
+      defaultValue: '',
+    ).isNotEmpty
+        ? const String.fromEnvironment('BACKEND_URL')
+        : defaultBackendUrl;
+
+    print('URL: $backendUrl');
+
+    _client ??= Openapi(
+      basePathOverride: backendUrl,
+      dio: createDio(backendUrl),
+    );
     return _client!;
+  }
+
+  static createDio(String baseUrl) {
+    final dio = Dio(BaseOptions(
+      baseUrl: baseUrl,
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 3),
+      sendTimeout: const Duration(seconds: 3),
+    ));
+
+    dio.interceptors.add(LogInterceptor(
+      requestBody: true,
+      responseBody: true,
+      logPrint: (object) {
+        print('🌐 HTTP: $object');
+      },
+    ));
+
+    return dio;
   }
 }

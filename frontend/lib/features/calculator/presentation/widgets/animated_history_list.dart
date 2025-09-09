@@ -73,7 +73,7 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 200),
     );
 
     final curve = CurvedAnimation(
@@ -82,10 +82,10 @@ class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
     );
 
     _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(curve);
-    _scale = Tween<double>(begin: 0.8, end: 1.0).animate(curve);
-    _slideOffset = Tween<double>(begin: 50, end: 0).animate(curve);
+    _scale = Tween<double>(begin: 0.9, end: 1.0).animate(curve);
+    _slideOffset = Tween<double>(begin: 30, end: 0).animate(curve);
 
-    Future.delayed(Duration(milliseconds: 70 * widget.index), () {
+    Future.delayed(Duration(milliseconds: 30 * widget.index), () {
       if (mounted) {
         _controller.forward();
       }

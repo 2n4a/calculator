@@ -424,7 +424,7 @@ async def eval_ast(node: Ast) -> Decimal:
             if isinstance(part, str):
                 prompt += part
             else:
-                prompt += str(eval_ast(part))
+                prompt += str(await eval_ast(part))
         success, result = await ask_llm(prompt)
         if not success:
             raise CalculationException(

@@ -19,8 +19,8 @@ def _load_key() -> str | None:
     return k or None
 
 GEN_API_KEY = _load_key()
-GEN_API_MODEL = os.getenv("GEN_API_MODEL", "gpt-4.1-nano")
-GEN_API_ENDPOINT = os.getenv("GEN_API_ENDPOINT", "https://api.gen-api.ru/api/v1/networks/gpt-4-1")
+GEN_API_MODEL = os.getenv("GEN_API_MODEL", "gpt-5-mini")
+GEN_API_ENDPOINT = os.getenv("GEN_API_ENDPOINT", "https://api.gen-api.ru/api/v1/networks/gpt-5")
 
 _CACHE_TTL = 1
 _CACHE: Dict[str, tuple[float, str]] = {}
@@ -30,7 +30,9 @@ _SYSTEM_PROMPT = (
     "Верни ТОЛЬКО одно математическое выражение, пригодное для локального вычисления. "
     "Без слов и единиц измерения\величины. Разрешены цифры, точка, + - * / ^ и скобки. "
     "Если нужно — выполни конвертацию/поиск и подставь числа. "
-    "Примеры: 324+100, 2+2*2, (299792458/1000), 3.1425926."
+    "Примеры: 324+100, 2+2*2, (299792458/1000), 3.1425926. "
+    "Не используй переменные, функции, и не предполагай параметризованные данные. "
+    "Если ответ не однозначный, дай наиболее правдоподобный"
 )
 _EXPR_RX = re.compile(r'^[\d\s+*\-\/^().]+$')
 def _valid_expr(s: str) -> bool:

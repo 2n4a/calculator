@@ -19,8 +19,8 @@ def _load_key() -> str | None:
     return k or None
 
 GEN_API_KEY = _load_key()
-GEN_API_MODEL = os.getenv("GEN_API_MODEL", "gpt-5-mini")
-GEN_API_ENDPOINT = os.getenv("GEN_API_ENDPOINT", "https://api.gen-api.ru/api/v1/networks/gpt-5")
+GEN_API_MODEL = os.getenv("GEN_API_MODEL", "gpt-4o-mini-2024-07-18")
+GEN_API_ENDPOINT = os.getenv("GEN_API_ENDPOINT", "https://api.gen-api.ru/api/v1/networks/gpt-4o-mini")
 
 _CACHE_TTL = 1
 _CACHE: Dict[str, tuple[float, str]] = {}

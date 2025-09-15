@@ -3,8 +3,6 @@ import 'package:calculator/features/calculator/domain/entities/calculation.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'liquid_glass_container.dart';
-
 class AnimatedHistoryList extends StatelessWidget {
   final List<Calculation> history;
   final ScrollController? scrollController;
@@ -61,213 +59,174 @@ class AnimatedHistoryItem extends StatefulWidget {
   State<AnimatedHistoryItem> createState() => _AnimatedHistoryItemState();
 }
 
-class _AnimatedHistoryItemState extends State<AnimatedHistoryItem>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _opacity;
-  late Animation<double> _scale;
-  late Animation<double> _slideOffset;
+class _AnimatedHistoryItemState extends State<AnimatedHistoryItem> {
+  // Кэшируем случайные стили для стабильности и производительности
+  late final double _borderRadius;
+  late final double _backgroundOpacity;
+  late final bool _usePrimaryBorder;
+  late final Color _primaryColor;
+  late final Color _secondaryColor;
+  late final String? _formattedTimestamp;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-
-    final curve = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutQuint,
-    );
-
-    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(curve);
-    _scale = Tween<double>(begin: 0.9, end: 1.0).animate(curve);
-    _slideOffset = Tween<double>(begin: 30, end: 0).animate(curve);
-
-    Future.delayed(Duration(milliseconds: 30 * widget.index), () {
-      if (mounted) {
-        _controller.forward();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    final r = widget.random;
+    final hueOffset = r.nextDouble() * 0.2;
+    _primaryColor = HSLColor.fromAHSL(
+      0.8,
+      220 + 20 * hueOffset,
+      0.7 + 0.2 * r.nextDouble(),
+      0.5 + 0.2 * r.nextDouble(),
+    ).toColor();
+    _secondaryColor = HSLColor.fromAHSL(
+      0.7,
+      190 + 30 * hueOffset,
+      0.6 + 0.3 * r.nextDouble(),
+      0.6 + 0.2 * r.nextDouble(),
+    ).toColor();
+    _borderRadius = 18.0 + r.nextDouble() * 2;
+    _backgroundOpacity = 0.08 + 0.06 * r.nextDouble();
+    _usePrimaryBorder = r.nextBool();
+    _formattedTimestamp = widget.item.timestamp == null
+        ? null
+        : widget.item.timestamp!
+            .toLocal()
+            .toString()
+            .split('.')
+            .first;
   }
 
   @override
   Widget build(BuildContext context) {
-    final hueOffset = widget.random.nextDouble() * 0.2;
-    final primaryColor = HSLColor.fromAHSL(
-      0.8,
-      220 + 20 * hueOffset,
-      0.7 + 0.2 * widget.random.nextDouble(),
-      0.5 + 0.2 * widget.random.nextDouble(),
-    ).toColor();
-
-    final secondaryColor = HSLColor.fromAHSL(
-      0.7,
-      190 + 30 * hueOffset,
-      0.6 + 0.3 * widget.random.nextDouble(),
-      0.6 + 0.2 * widget.random.nextDouble(),
-    ).toColor();
-
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final colorScheme = Theme.of(context).colorScheme;
-        return Opacity(
-          opacity: _opacity.value,
-          child: Transform.translate(
-            offset: Offset(0, _slideOffset.value),
-            child: Transform.scale(
-              scale: _scale.value,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                child: LiquidGlassContainer(
-                  borderRadius: 18.0 + widget.random.nextDouble() * 2,
-                  backgroundColor: colorScheme.surface.withOpacity(
-                    0.08 + 0.06 * widget.random.nextDouble(),
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(_borderRadius),
+            onTap: () async {
+              final textToCopy = "${widget.item.expression} = ${widget.item.result}";
+              await Clipboard.setData(ClipboardData(text: textToCopy));
+              if (!context.mounted) return;
+              final scaffold = ScaffoldMessenger.of(context);
+              scaffold.clearSnackBars();
+              scaffold.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    "Скопировано: $textToCopy",
+                    style: TextStyle(
+                      color: colorScheme.onSecondaryContainer,
+                    ),
                   ),
-                  borderColor: widget.random.nextBool()
-                      ? colorScheme.primary.withOpacity(0.2)
-                      : colorScheme.secondary.withOpacity(0.2),
-                  blur: 16.0 + widget.random.nextDouble() * 4,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(18),
-                    onTap: () async {
-                      final textToCopy =
-                          "${widget.item.expression} = ${widget.item.result}";
-                      await Clipboard.setData(ClipboardData(text: textToCopy));
-
-                      if (context.mounted) {
-                        final scaffold = ScaffoldMessenger.of(context);
-                        scaffold.clearSnackBars();
-                        scaffold.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "Скопировано: $textToCopy",
-                              style: TextStyle(
-                                color: colorScheme.onSecondaryContainer,
-                              ),
-                            ),
-                            backgroundColor:
-                                colorScheme.secondaryContainer.withOpacity(0.7),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            duration: const Duration(milliseconds: 1500),
-                          ),
-                        );
-                      }
-
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 12.0,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.item.expression,
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontSize: 18,
-
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.onSurface.withOpacity(0.95),
-                              shadows: [
-                                Shadow(
-                                  color: primaryColor.withOpacity(0.7),
-                                  blurRadius: 4.0,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    "=  ",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          fontSize: 17,
-
-                                          fontWeight: FontWeight.w500,
-                                          color: colorScheme.onSurface
-                                              .withOpacity(0.7),
-                                        ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          primaryColor.withValues(alpha: 0.7),
-                                          secondaryColor.withValues(alpha: 0.7),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      widget.item.result,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                            fontSize: 17,
-
-                                            fontWeight: FontWeight.bold,
-                                            color: colorScheme.onPrimary,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (widget.item.timestamp != null)
-                                Text(
-                                  widget.item.timestamp!
-                                      .toLocal()
-                                      .toString()
-                                      .split('.')[0],
-
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-
-                                        color: colorScheme.onSurface
-                                            .withOpacity(0.6),
-                                      ),
-                                ),
-                            ],
+                  backgroundColor: colorScheme.secondaryContainer.withOpacity(0.7),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  duration: const Duration(milliseconds: 1500),
+                ),
+              );
+            },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeOut,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_borderRadius),
+              color: colorScheme.surface.withOpacity(_backgroundOpacity),
+              border: Border.all(
+                color: (_usePrimaryBorder ? colorScheme.primary : colorScheme.secondary).withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.item.expression,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface.withOpacity(0.95),
+                        shadows: [
+                          Shadow(
+                            color: _primaryColor.withOpacity(0.55),
+                            blurRadius: 3.0,
                           ),
                         ],
                       ),
-                    ),
-                  ),
                 ),
-              ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          "=  ",
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w500,
+                                color: colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                _primaryColor.withValues(alpha: 0.7),
+                                _secondaryColor.withValues(alpha: 0.7),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Builder(builder: (context) {
+                            final full = widget.item.result;
+                            final display = full.length > 10
+                                ? full.substring(0, 10)
+                                : full;
+                            return Tooltip(
+                              message: full.length > 10 ? full : '',
+                              waitDuration: const Duration(milliseconds: 300),
+                              child: Text(
+                                display,
+                                overflow: TextOverflow.visible,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.onPrimary,
+                                    ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                    if (_formattedTimestamp != null)
+                      Text(
+                        _formattedTimestamp,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

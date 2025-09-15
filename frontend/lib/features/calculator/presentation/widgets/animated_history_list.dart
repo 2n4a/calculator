@@ -60,7 +60,6 @@ class AnimatedHistoryItem extends StatefulWidget {
 }
 
 class _AnimatedHistoryItemState extends State<AnimatedHistoryItem> {
-  // Кэшируем случайные стили для стабильности и производительности
   late final double _borderRadius;
   late final double _backgroundOpacity;
   late final bool _usePrimaryBorder;

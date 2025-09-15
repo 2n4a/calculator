@@ -26,41 +26,75 @@ class LiquidGlassContainer extends StatefulWidget {
 
 class _LiquidGlassContainerState extends State<LiquidGlassContainer>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
+  AnimationController? _controller;
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 10),
-    )..repeat();
+    if (widget.animate) {
+      _controller = AnimationController(
+        vsync: this,
+        duration: const Duration(seconds: 10),
+      )..repeat();
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.animate) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(widget.borderRadius),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: widget.blur, sigmaY: widget.blur),
+          child: Container(
+            decoration: BoxDecoration(
+              color: widget.backgroundColor ??
+                  Theme.of(context).colorScheme.surface.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              border: Border.all(
+                color: widget.borderColor ??
+                    Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.15),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.1),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: widget.child,
+          ),
+        ),
+      );
+    }
+
     return AnimatedBuilder(
-      animation: _controller,
+      animation: _controller!,
       builder: (context, child) {
         return ClipRRect(
           borderRadius: BorderRadius.circular(widget.borderRadius),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: widget.blur, sigmaY: widget.blur),
             child: CustomPaint(
-              painter: widget.animate
-                  ? _LiquidBorderPainter(
-                      animation: _controller,
-                      borderRadius: widget.borderRadius,
-                      borderColor: widget.borderColor ??
-                          Colors.white.withValues(alpha: 0.25),
-                    )
-                  : null,
+              painter: _LiquidBorderPainter(
+                animation: _controller!,
+                borderRadius: widget.borderRadius,
+                borderColor: widget.borderColor ??
+                    Colors.white.withValues(alpha: 0.25),
+              ),
               child: Container(
                 decoration: BoxDecoration(
                   color: widget.backgroundColor ??
